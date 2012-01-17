@@ -1,0 +1,1 @@
+The aim of this project is to create a Java library which can be used to record data, which is sent via Bluetooth from a HeartMan ECG device.

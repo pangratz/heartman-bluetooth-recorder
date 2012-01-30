@@ -49,8 +49,9 @@ public class HeartManMock implements Runnable {
     DataOutputStream dos = null;
     StreamConnectionNotifier service = null;
 
-    String url = "btspp://localhost:" + HeartManDiscovery.RFCOMM_UUID
+    String url = "btspp://localhost:" + HeartManDiscovery.HEARTMAN_SERVICE_UUID
         + ";authenticate=false;encrypt=false;name=" + name;
+
     try {
       service = (StreamConnectionNotifier) Connector.open(url);
       System.out.println("Waiting for incoming connection...");

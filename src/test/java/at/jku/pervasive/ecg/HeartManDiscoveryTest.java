@@ -60,6 +60,70 @@ public class HeartManDiscoveryTest extends TestCase {
     }
   }
 
+  public void testStartListeningWithMoreListeners() throws Exception {
+    heartManSimulator.startDevice(666L);
+
+    final Semaphore s = new Semaphore(0);
+    TestHeartManListener l1 = new TestHeartManListener() {
+      @Override
+      public void dataReceived(double value) {
+        super.dataReceived(value);
+        s.release(1);
+      }
+    };
+    TestHeartManListener l2 = new TestHeartManListener() {
+      @Override
+      public void dataReceived(double value) {
+        super.dataReceived(value);
+        s.release(1);
+      }
+    };
+
+    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
+    HeartManDevice device = devices.get(0);
+
+    heartManDiscovery.startListening(device, l1);
+    heartManSimulator.sendValue(666L, 123.4D);
+    // wait until listener got invoked
+    s.acquire(1);
+
+    // l1 invoked - l2 not
+    assertTrue(l1.invoked);
+    assertEquals(123.4D, l1.receivedValue, 0.1D);
+    assertFalse(l2.invoked);
+
+    // reset
+    l1.reset();
+    l2.reset();
+
+    // add second listener
+    heartManDiscovery.startListening(device, l2);
+    heartManSimulator.sendValue(666L, 567.8D);
+    // wait until both are invoked
+    s.acquire(2);
+
+    // both listeners invoked
+    assertTrue(l1.invoked);
+    assertEquals(567.8D, l1.receivedValue, 0.1D);
+    assertTrue(l2.invoked);
+    assertEquals(567.8D, l2.receivedValue, 0.1D);
+  }
+
+  public void testStartListeringWithInvalidListener() throws Exception {
+    heartManSimulator.startDevice(666L);
+
+    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
+    assertNotNull(devices);
+    assertEquals(1, devices.size());
+    HeartManDevice device = devices.get(0);
+
+    try {
+      heartManDiscovery.startListening(device, null);
+    } catch (Exception e) {
+      fail("should not throw an exception");
+    }
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

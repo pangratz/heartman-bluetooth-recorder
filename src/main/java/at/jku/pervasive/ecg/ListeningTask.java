@@ -29,7 +29,9 @@ public class ListeningTask extends Thread {
   }
 
   public void addListener(HeartManListener listener) {
-    this.listeners.add(listener);
+    if (listener != null) {
+      this.listeners.add(listener);
+    }
   }
 
   @Override

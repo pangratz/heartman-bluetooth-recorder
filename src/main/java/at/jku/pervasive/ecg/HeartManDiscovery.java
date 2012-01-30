@@ -22,7 +22,7 @@ import com.intel.bluetooth.BluetoothConsts;
 
 public class HeartManDiscovery {
 
-  public static final UUID RFCOMM_UUID = BluetoothConsts.RFCOMM_PROTOCOL_UUID;
+  public static final UUID HEARTMAN_SERVICE_UUID = BluetoothConsts.RFCOMM_PROTOCOL_UUID;
 
   private final List<RemoteDevice> devicesDiscovered = new LinkedList<RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
@@ -113,7 +113,7 @@ public class HeartManDiscovery {
     final Semaphore searchServicesLock = new Semaphore(0);
 
     final int[] attrs = new int[] { 0x0100 }; // Service name
-    UUID[] serviceUUIDs = new UUID[] { HeartManDiscovery.RFCOMM_UUID };
+    UUID[] serviceUUIDs = new UUID[] { HeartManDiscovery.HEARTMAN_SERVICE_UUID };
     discoveryAgent.searchServices(attrs, serviceUUIDs, remoteDevice,
         new DiscoveryListener() {
 
@@ -151,11 +151,7 @@ public class HeartManDiscovery {
             searchServicesLock.release();
           }
         });
-    try {
-      searchServicesLock.acquire();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    searchServicesLock.acquireUninterruptibly();
     return serviceRecords;
   }
 

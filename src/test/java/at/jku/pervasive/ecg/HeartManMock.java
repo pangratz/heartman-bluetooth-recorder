@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
 import javax.bluetooth.RemoteDevice;
-import javax.bluetooth.UUID;
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
 import javax.microedition.io.StreamConnectionNotifier;
@@ -16,29 +15,7 @@ public class HeartManMock implements Runnable {
 
   private boolean isRunning;
   private final Semaphore lock = new Semaphore(0);
-  private final String name;
-
   private double nextValue;
-
-  private final UUID uuid;
-
-  public HeartManMock(long uuidValue) {
-    this(uuidValue, "HeartMan" + uuidValue);
-  }
-
-  public HeartManMock(long uuidValue, String name) {
-    super();
-    this.uuid = new UUID(uuidValue);
-    this.name = name;
-  }
-
-  public String getName() {
-    return this.name;
-  }
-
-  public UUID getUUID() {
-    return uuid;
-  }
 
   @Override
   public final void run() {
@@ -50,7 +27,7 @@ public class HeartManMock implements Runnable {
     StreamConnectionNotifier service = null;
 
     String url = "btspp://localhost:" + HeartManDiscovery.HEARTMAN_SERVICE_UUID
-        + ";authenticate=false;encrypt=false;name=" + name;
+        + ";authenticate=false;encrypt=false";
 
     try {
       service = (StreamConnectionNotifier) Connector.open(url);

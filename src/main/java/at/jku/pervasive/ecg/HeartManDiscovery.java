@@ -24,7 +24,7 @@ public class HeartManDiscovery {
 
   public static final UUID HEARTMAN_SERVICE_UUID = BluetoothConsts.RFCOMM_PROTOCOL_UUID;
 
-  private final List<RemoteDevice> devicesDiscovered = new LinkedList<RemoteDevice>();
+  private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
 
   private final Object STACK_ID;
@@ -52,7 +52,7 @@ public class HeartManDiscovery {
       public void deviceDiscovered(RemoteDevice btDevice, DeviceClass cod) {
         System.out.println("Device " + btDevice.getBluetoothAddress()
             + " found");
-        devicesDiscovered.add(btDevice);
+        devicesDiscovered.put(btDevice.getBluetoothAddress(), btDevice);
         try {
           System.out.println("     name " + btDevice.getFriendlyName(true));
           System.out.println("     adress: " + btDevice.getBluetoothAddress());
@@ -86,7 +86,7 @@ public class HeartManDiscovery {
         System.out.println(devicesDiscovered.size() + " device(s) found");
 
         List<HeartManDevice> heartManDevices = new LinkedList<HeartManDevice>();
-        for (RemoteDevice device : devicesDiscovered) {
+        for (RemoteDevice device : devicesDiscovered.values()) {
           heartManDevices.add(new HeartManDevice(device.getFriendlyName(false),
               device));
         }
@@ -155,13 +155,30 @@ public class HeartManDiscovery {
     return serviceRecords;
   }
 
+  public List<ServiceRecord> searchServices(String address)
+      throws BluetoothStateException {
+
+    System.out.println("search for services for " + address);
+
+    RemoteDevice device = devicesDiscovered.get(address);
+    if (device != null) {
+      return searchServices(device);
+    }
+    return null;
+  }
+
   public void startListening(HeartManDevice device, HeartManListener listener)
       throws BluetoothStateException {
     String address = device.getDevice().getBluetoothAddress();
+    startListening(address, listener);
+  }
+
+  public void startListening(String address, HeartManListener listener)
+      throws BluetoothStateException {
     ListeningTask listeningTask = listeningTasks.get(address);
     boolean start = false;
     if (listeningTask == null) {
-      List<ServiceRecord> services = searchServices(device.getDevice());
+      List<ServiceRecord> services = searchServices(address);
 
       ServiceRecord serviceRecord = services.get(0);
       listeningTask = new ListeningTask(STACK_ID, serviceRecord);

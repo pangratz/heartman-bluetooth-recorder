@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.bluetooth.BluetoothStateException;
 
@@ -15,54 +16,42 @@ import com.intel.bluetooth.EmulatorTestsHelper;
  */
 public class HeartManSimulator {
 
-  private final Map<Long, HeartManMock> mocks;
+  private final String baseAddress = "0B100000000%1$s";
+  private final AtomicInteger count = new AtomicInteger(0);
+  private final Map<String, HeartManMock> mocks;
   private final List<Thread> serverThreads;
 
   public HeartManSimulator() throws BluetoothStateException {
     super();
 
     serverThreads = new LinkedList<Thread>();
-    mocks = new HashMap<Long, HeartManMock>(1);
+    mocks = new HashMap<String, HeartManMock>(1);
 
     EmulatorTestsHelper.startInProcessServer();
     EmulatorTestsHelper.useThreadLocalEmulator();
   }
 
-  public void sendValue(long uuid, double value) {
-    HeartManMock mock = mocks.get(uuid);
+  public String createDevice() throws BluetoothStateException {
+    String address = String.format(baseAddress, count.incrementAndGet());
+
+    HeartManMock mock = new HeartManMock();
+    mocks.put(address, mock);
+    Thread t = EmulatorTestsHelper.runNewEmulatorStack(mock);
+    serverThreads.add(t);
+
+    return address;
+  }
+
+  public void sendValue(String address, double value) {
+    HeartManMock mock = mocks.get(address);
     if (mock != null) {
       mock.sendValue(value);
     }
   }
 
-  public String startDevice(long uuid) throws BluetoothStateException {
-    return startServer(uuid, new HeartManMock(uuid));
-  }
-
-  public String startServer(long uuid, HeartManMock mock)
-      throws BluetoothStateException {
-    mocks.put(uuid, mock);
-    Thread t = EmulatorTestsHelper.runNewEmulatorStack(mock);
-    serverThreads.add(t);
-
-    String mockName = mock.getName();
-    try {
-      List<HeartManDevice> devices = new HeartManDiscovery()
-          .discoverHeartManDevices();
-      for (HeartManDevice device : devices) {
-        if (mockName.equals(device.getName())) {
-          return device.getDevice().getBluetoothAddress();
-        }
-      }
-    } catch (Exception e) {
-    }
-
-    return null;
-  }
-
   public void stopServer() throws InterruptedException {
-    for (long uuid : mocks.keySet()) {
-      mocks.get(uuid).stop();
+    for (HeartManMock mock : mocks.values()) {
+      mock.stop();
     }
     for (Thread serverThread : serverThreads) {
       if ((serverThread != null) && (serverThread.isAlive())) {

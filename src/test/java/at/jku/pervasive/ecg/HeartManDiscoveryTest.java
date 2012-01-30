@@ -3,6 +3,8 @@ package at.jku.pervasive.ecg;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import javax.bluetooth.ServiceRecord;
+
 import junit.framework.TestCase;
 
 public class HeartManDiscoveryTest extends TestCase {
@@ -11,7 +13,7 @@ public class HeartManDiscoveryTest extends TestCase {
   private HeartManSimulator heartManSimulator;
 
   public void testDiscoverHeartManDevices() throws Exception {
-    heartManSimulator.startDevice(666);
+    heartManSimulator.createDevice();
 
     List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
     assertNotNull(devices);
@@ -22,18 +24,20 @@ public class HeartManDiscoveryTest extends TestCase {
   }
 
   public void testGetService() throws Exception {
-    heartManSimulator.startDevice(123);
-    heartManSimulator.startDevice(456);
+    String address = heartManSimulator.createDevice();
 
-    List<HeartManDevice> heartManDevices = heartManDiscovery
-        .discoverHeartManDevices();
+    heartManDiscovery.discoverHeartManDevices();
 
-    heartManDiscovery.searchServices(heartManDevices.get(0).getDevice());
-    heartManDiscovery.searchServices(heartManDevices.get(1).getDevice());
+    List<ServiceRecord> services = heartManDiscovery.searchServices(address);
+    assertNotNull(services);
+    assertEquals(1, services.size());
   }
 
   public void testStartListening() throws Exception {
-    heartManSimulator.startDevice(666L);
+    String address = heartManSimulator.createDevice();
+    assertEquals("0B1000000001", address);
+
+    heartManDiscovery.discoverHeartManDevices();
 
     final Semaphore s = new Semaphore(0);
     TestHeartManListener listener = new TestHeartManListener() {
@@ -43,9 +47,8 @@ public class HeartManDiscoveryTest extends TestCase {
         s.release();
       }
     };
-    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
-    heartManDiscovery.startListening(devices.get(0), listener);
-    heartManSimulator.sendValue(666L, 666.6D);
+    heartManDiscovery.startListening(address, listener);
+    heartManSimulator.sendValue(address, 666.6D);
     s.acquireUninterruptibly();
 
     assertEquals(666.6D, listener.receivedValue, 0.01D);
@@ -54,15 +57,16 @@ public class HeartManDiscoveryTest extends TestCase {
 
   public void testStartListeningForInvalidAdress() throws Exception {
     try {
-      heartManDiscovery.startListening(null, new DefaulHeartManListener());
+      heartManDiscovery.startListening((String) null,
+          new DefaulHeartManListener());
       fail("should throw an exception when trying to start listening for a device which is not available");
     } catch (Exception e) {
     }
   }
 
   public void testStartListeningForMoreDevices() throws Exception {
-    heartManSimulator.startDevice(666L);
-    heartManSimulator.startDevice(667L);
+    String first = heartManSimulator.createDevice();
+    String second = heartManSimulator.createDevice();
 
     final Semaphore s = new Semaphore(0);
     TestHeartManListener listener = new TestHeartManListener() {
@@ -77,17 +81,17 @@ public class HeartManDiscoveryTest extends TestCase {
     assertNotNull(devices);
     assertEquals(2, devices.size());
 
-    heartManDiscovery.startListening(devices.get(0), listener);
-    heartManDiscovery.startListening(devices.get(1), listener);
+    heartManDiscovery.startListening(first, listener);
+    heartManDiscovery.startListening(second, listener);
 
-    heartManSimulator.sendValue(666L, 42);
+    heartManSimulator.sendValue(first, 42);
     s.acquire();
 
     assertTrue(listener.invoked);
     assertEquals(42, listener.receivedValue, 0.1D);
     assertEquals(0, s.availablePermits());
 
-    heartManSimulator.sendValue(667L, 13);
+    heartManSimulator.sendValue(second, 13);
     s.acquire();
 
     assertTrue(listener.invoked);
@@ -96,7 +100,7 @@ public class HeartManDiscoveryTest extends TestCase {
   }
 
   public void testStartListeningWithMoreListeners() throws Exception {
-    heartManSimulator.startDevice(666L);
+    String address = heartManSimulator.createDevice();
 
     final Semaphore s = new Semaphore(0);
     TestHeartManListener l1 = new TestHeartManListener() {
@@ -115,10 +119,9 @@ public class HeartManDiscoveryTest extends TestCase {
     };
 
     List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
-    HeartManDevice device = devices.get(0);
 
-    heartManDiscovery.startListening(device, l1);
-    heartManSimulator.sendValue(666L, 123.4D);
+    heartManDiscovery.startListening(address, l1);
+    heartManSimulator.sendValue(address, 123.4D);
     // wait until listener got invoked
     s.acquire(1);
 
@@ -132,8 +135,8 @@ public class HeartManDiscoveryTest extends TestCase {
     l2.reset();
 
     // add second listener
-    heartManDiscovery.startListening(device, l2);
-    heartManSimulator.sendValue(666L, 567.8D);
+    heartManDiscovery.startListening(address, l2);
+    heartManSimulator.sendValue(address, 567.8D);
     // wait until both are invoked
     s.acquire(2);
 
@@ -145,15 +148,14 @@ public class HeartManDiscoveryTest extends TestCase {
   }
 
   public void testStartListeringWithInvalidListener() throws Exception {
-    heartManSimulator.startDevice(666L);
+    String address = heartManSimulator.createDevice();
 
     List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
     assertNotNull(devices);
     assertEquals(1, devices.size());
-    HeartManDevice device = devices.get(0);
 
     try {
-      heartManDiscovery.startListening(device, null);
+      heartManDiscovery.startListening(address, null);
     } catch (Exception e) {
       fail("should not throw an exception");
     }

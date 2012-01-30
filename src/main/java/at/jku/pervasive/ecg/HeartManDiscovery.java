@@ -186,8 +186,8 @@ public class HeartManDiscovery {
     }
   }
 
-  public void stopListening(long uuid) {
-    ListeningTask listeningTask = listeningTasks.get(uuid);
+  public void stopListening(String address) {
+    ListeningTask listeningTask = listeningTasks.get(address);
     if (listeningTask != null) {
       listeningTask.interrupt();
     }

@@ -117,7 +117,7 @@ public class HeartManDiscoveryTest extends TestCase {
       }
     };
 
-    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
+    heartManDiscovery.discoverHeartManDevices();
 
     heartManDiscovery.startListening(address, l1);
     heartManSimulator.sendValue(address, 123.4D);
@@ -157,6 +157,52 @@ public class HeartManDiscoveryTest extends TestCase {
       heartManDiscovery.startListening(address, null);
     } catch (Exception e) {
       fail("should not throw an exception");
+    }
+  }
+
+  public void testStopListening() throws Exception {
+    String address = heartManSimulator.createDevice();
+    heartManDiscovery.discoverHeartManDevices();
+
+    final Semaphore s = new Semaphore(0);
+    TestHeartManListener listener = new TestHeartManListener() {
+      @Override
+      public void dataReceived(double value) {
+        super.dataReceived(value);
+        s.release();
+      }
+    };
+
+    heartManDiscovery.startListening(address, listener);
+    heartManSimulator.sendValue(address, 42);
+    s.acquireUninterruptibly();
+
+    assertTrue(listener.invoked);
+    listener.reset();
+
+    heartManDiscovery.stopListening(address);
+
+    heartManSimulator.sendValue(address, 69);
+    s.acquireUninterruptibly();
+
+    assertFalse(listener.invoked);
+  }
+
+  public void testStopListeningForNullAddress() throws Exception {
+    try {
+      heartManDiscovery.stopListening(null);
+    } catch (Exception e) {
+      fail("should not thrown an exception");
+    }
+  }
+
+  public void testStopListeningWhenNotListening() throws Exception {
+    String address = heartManSimulator.createDevice();
+
+    try {
+      heartManDiscovery.stopListening(address);
+    } catch (Exception e) {
+      fail("should not thrown an exception");
     }
   }
 

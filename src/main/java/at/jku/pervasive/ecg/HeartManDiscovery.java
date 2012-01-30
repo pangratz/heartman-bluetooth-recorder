@@ -189,6 +189,7 @@ public class HeartManDiscovery {
   public void stopListening(String address) {
     ListeningTask listeningTask = listeningTasks.get(address);
     if (listeningTask != null) {
+      listeningTask.clearListener();
       listeningTask.interrupt();
     }
   }

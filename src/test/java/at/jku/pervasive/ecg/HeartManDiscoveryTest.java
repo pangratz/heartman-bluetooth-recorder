@@ -60,6 +60,41 @@ public class HeartManDiscoveryTest extends TestCase {
     }
   }
 
+  public void testStartListeningForMoreDevices() throws Exception {
+    heartManSimulator.startDevice(666L);
+    heartManSimulator.startDevice(667L);
+
+    final Semaphore s = new Semaphore(0);
+    TestHeartManListener listener = new TestHeartManListener() {
+      @Override
+      public void dataReceived(double value) {
+        super.dataReceived(value);
+        s.release(1);
+      }
+    };
+
+    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
+    assertNotNull(devices);
+    assertEquals(2, devices.size());
+
+    heartManDiscovery.startListening(devices.get(0), listener);
+    heartManDiscovery.startListening(devices.get(1), listener);
+
+    heartManSimulator.sendValue(666L, 42);
+    s.acquire();
+
+    assertTrue(listener.invoked);
+    assertEquals(42, listener.receivedValue, 0.1D);
+    assertEquals(0, s.availablePermits());
+
+    heartManSimulator.sendValue(667L, 13);
+    s.acquire();
+
+    assertTrue(listener.invoked);
+    assertEquals(13, listener.receivedValue, 0.1D);
+    assertEquals(0, s.availablePermits());
+  }
+
   public void testStartListeningWithMoreListeners() throws Exception {
     heartManSimulator.startDevice(666L);
 

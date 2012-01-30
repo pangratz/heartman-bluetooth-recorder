@@ -1,6 +1,5 @@
 package at.jku.pervasive.ecg;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -17,7 +16,6 @@ import javax.bluetooth.LocalDevice;
 import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 import javax.bluetooth.UUID;
-import javax.microedition.io.Connector;
 
 import com.intel.bluetooth.BlueCoveImpl;
 import com.intel.bluetooth.BluetoothConsts;
@@ -98,17 +96,6 @@ public class HeartManDiscovery {
 
       return null;
     }
-  }
-
-  public double getData(long uuid) throws IOException {
-    DiscoveryAgent da = LocalDevice.getLocalDevice().getDiscoveryAgent();
-    int security = ServiceRecord.NOAUTHENTICATE_NOENCRYPT;
-    String serviceUrl = da.selectService(new UUID(uuid), security, false);
-
-    DataInputStream dis = Connector.openDataInputStream(serviceUrl);
-    double read = dis.readDouble();
-    dis.close();
-    return read;
   }
 
   public boolean isBluetoothEnabled() {

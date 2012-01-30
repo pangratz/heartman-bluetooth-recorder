@@ -1,25 +1,14 @@
 package at.jku.pervasive.ecg;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
 import junit.framework.TestCase;
 
-import org.junit.Ignore;
-
 public class HeartManDiscoveryTest extends TestCase {
 
   private HeartManDiscovery heartManDiscovery;
   private HeartManSimulator heartManSimulator;
-
-  @Ignore
-  public void NOTtestGetData() throws IOException {
-    heartManSimulator.startDevice(666);
-
-    heartManSimulator.sendValue(666L, 1.0);
-    assertEquals(1.0D, heartManDiscovery.getData(666), 0.1D);
-  }
 
   public void testDiscoverHeartManDevices() throws Exception {
     heartManSimulator.startDevice(666);
@@ -38,8 +27,6 @@ public class HeartManDiscoveryTest extends TestCase {
 
     List<HeartManDevice> heartManDevices = heartManDiscovery
         .discoverHeartManDevices();
-
-    System.out.println("###");
 
     heartManDiscovery.searchServices(heartManDevices.get(0).getDevice());
     heartManDiscovery.searchServices(heartManDevices.get(1).getDevice());

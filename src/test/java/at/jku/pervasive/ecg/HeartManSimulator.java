@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.bluetooth.BluetoothStateException;
-import javax.bluetooth.UUID;
 
 import com.intel.bluetooth.EmulatorTestsHelper;
 
@@ -16,38 +15,39 @@ import com.intel.bluetooth.EmulatorTestsHelper;
  */
 public class HeartManSimulator {
 
-  private final Map<UUID, HeartManMock> mocks;
+  private final Map<Long, HeartManMock> mocks;
   private final List<Thread> serverThreads;
 
   public HeartManSimulator() throws BluetoothStateException {
     super();
 
     serverThreads = new LinkedList<Thread>();
-    mocks = new HashMap<UUID, HeartManMock>(1);
+    mocks = new HashMap<Long, HeartManMock>(1);
 
     EmulatorTestsHelper.startInProcessServer();
     EmulatorTestsHelper.useThreadLocalEmulator();
   }
 
   public void sendValue(long uuid, double value) {
-    HeartManMock mock = mocks.get(new UUID(uuid));
+    HeartManMock mock = mocks.get(uuid);
     if (mock != null) {
       mock.sendValue(value);
     }
   }
 
   public void startDevice(long uuid) throws BluetoothStateException {
-    this.startServer(new HeartManMock(uuid));
+    this.startServer(uuid, new HeartManMock(uuid));
   }
 
-  public void startServer(HeartManMock mock) throws BluetoothStateException {
-    mocks.put(mock.getUUID(), mock);
+  public void startServer(long uuid, HeartManMock mock)
+      throws BluetoothStateException {
+    mocks.put(uuid, mock);
     Thread t = EmulatorTestsHelper.runNewEmulatorStack(mock);
     serverThreads.add(t);
   }
 
   public void stopServer() throws InterruptedException {
-    for (UUID uuid : mocks.keySet()) {
+    for (long uuid : mocks.keySet()) {
       mocks.get(uuid).stop();
     }
     for (Thread serverThread : serverThreads) {

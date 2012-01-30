@@ -19,6 +19,7 @@ import javax.bluetooth.ServiceRecord;
 import javax.bluetooth.UUID;
 import javax.microedition.io.Connector;
 
+import com.intel.bluetooth.BlueCoveImpl;
 import com.intel.bluetooth.BluetoothConsts;
 
 public class HeartManDiscovery {
@@ -27,6 +28,18 @@ public class HeartManDiscovery {
 
   private final List<RemoteDevice> devicesDiscovered = new LinkedList<RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
+
+  private final Object STACK_ID;
+
+  public HeartManDiscovery() {
+    super();
+
+    try {
+      STACK_ID = BlueCoveImpl.getThreadBluetoothStackID();
+    } catch (BluetoothStateException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public List<HeartManDevice> discoverHeartManDevices() throws IOException,
       InterruptedException {
@@ -110,7 +123,6 @@ public class HeartManDiscovery {
     LocalDevice localDevice = LocalDevice.getLocalDevice();
     DiscoveryAgent discoveryAgent = localDevice.getDiscoveryAgent();
 
-    final List<String> serviceFound = new LinkedList<String>();
     final Semaphore searchServicesLock = new Semaphore(0);
 
     final int[] attrs = new int[] { 0x0100 }; // Service name
@@ -134,13 +146,13 @@ public class HeartManDiscovery {
               if (url == null) {
                 continue;
               }
-              serviceFound.add(url);
               DataElement serviceName = servRecord[i].getAttributeValue(0x0100);
 
               if (serviceName != null) {
                 System.out.println("service " + serviceName.getValue()
                     + " found " + url);
                 serviceRecords.add(servRecord[i]);
+
               } else {
                 System.out.println("service found " + url);
               }
@@ -167,9 +179,12 @@ public class HeartManDiscovery {
     boolean start = false;
     if (listeningTask == null) {
       List<ServiceRecord> services = searchServices(device.getDevice());
-      listeningTask = new ListeningTask(services.get(0));
+
+      ServiceRecord serviceRecord = services.get(0);
+      listeningTask = new ListeningTask(STACK_ID, serviceRecord);
       listeningTasks.put(address, listeningTask);
       start = true;
+
     }
     listeningTask.addListener(listener);
     if (start) {

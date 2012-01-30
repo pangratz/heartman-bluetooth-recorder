@@ -18,9 +18,11 @@ public class ListeningTask extends Thread {
 
   private final List<HeartManListener> listeners;
   private final ServiceRecord serviceRecord;
+  private final Object stackId;
 
-  public ListeningTask(ServiceRecord serviceRecord) {
+  public ListeningTask(Object stackId, ServiceRecord serviceRecord) {
     super();
+    this.stackId = stackId;
     this.serviceRecord = serviceRecord;
 
     listeners = new ArrayList<HeartManListener>(1);
@@ -37,13 +39,11 @@ public class ListeningTask extends Thread {
 
     try {
 
-      Object id = BlueCoveImpl.getThreadBluetoothStackID();
-      BlueCoveImpl.setThreadBluetoothStackID(id);
+      BlueCoveImpl.setThreadBluetoothStackID(stackId);
 
       int security = ServiceRecord.NOAUTHENTICATE_NOENCRYPT;
       String url = serviceRecord.getConnectionURL(security, false);
-      conn = (StreamConnection) Connector.open(url);
-      dis = conn.openDataInputStream();
+      dis = Connector.openDataInputStream(url);
 
       while (!isInterrupted()) {
         double value = dis.readDouble();

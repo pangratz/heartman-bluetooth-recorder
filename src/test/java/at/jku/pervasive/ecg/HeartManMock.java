@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
+import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.UUID;
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
@@ -16,7 +17,9 @@ public class HeartManMock implements Runnable {
   private boolean isRunning;
   private final Semaphore lock = new Semaphore(0);
   private final String name;
+
   private double nextValue;
+
   private final UUID uuid;
 
   public HeartManMock(long uuidValue) {
@@ -46,20 +49,27 @@ public class HeartManMock implements Runnable {
     DataOutputStream dos = null;
     StreamConnectionNotifier service = null;
 
-    String url = "btspp://localhost:" + uuid.toString() + ";name=" + name;
+    String url = "btspp://localhost:" + HeartManDiscovery.RFCOMM_UUID
+        + ";authenticate=false;encrypt=false;name=" + name;
     try {
       service = (StreamConnectionNotifier) Connector.open(url);
+      System.out.println("Waiting for incoming connection...");
       StreamConnection connection = service.acceptAndOpen();
-      dos = connection.openDataOutputStream();
 
-      System.out.println("isRunning: " + isRunning);
+      RemoteDevice client = RemoteDevice.getRemoteDevice(connection);
+      String clientFriendlyName = client.getFriendlyName(true);
+      System.out.println("connected to " + clientFriendlyName);
+
+      dos = connection.openDataOutputStream();
 
       while (isRunning) {
         System.out.println("waiting for lock to release");
         try {
           lock.acquire();
-          System.out.println("lock released and got value " + nextValue);
-          dos.writeDouble(nextValue);
+          if (isRunning) {
+            System.out.println("lock released and got value " + nextValue);
+            dos.writeDouble(nextValue);
+          }
         } catch (InterruptedException e) {
         }
       }

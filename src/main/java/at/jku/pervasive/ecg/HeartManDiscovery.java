@@ -87,8 +87,9 @@ public class HeartManDiscovery {
 
         List<HeartManDevice> heartManDevices = new LinkedList<HeartManDevice>();
         for (RemoteDevice device : devicesDiscovered.values()) {
-          heartManDevices.add(new HeartManDevice(device.getFriendlyName(false),
-              device));
+          String name = device.getFriendlyName(false);
+          HeartManDevice heartManDevice = new HeartManDevice(name);
+          heartManDevices.add(heartManDevice);
         }
 
         return heartManDevices;

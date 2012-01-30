@@ -35,7 +35,6 @@ public class HeartManDiscoveryTest extends TestCase {
 
   public void testStartListening() throws Exception {
     String address = heartManSimulator.createDevice();
-    assertEquals("0B1000000001", address);
 
     heartManDiscovery.discoverHeartManDevices();
 
@@ -159,6 +158,20 @@ public class HeartManDiscoveryTest extends TestCase {
     } catch (Exception e) {
       fail("should not throw an exception");
     }
+  }
+
+  public void testTwoHeartManDiscoveryInstances() throws Exception {
+    heartManSimulator.createDevice();
+
+    List<HeartManDevice> firstList = heartManDiscovery
+        .discoverHeartManDevices();
+    assertNotNull(firstList);
+    assertEquals(1, firstList.size());
+
+    HeartManDiscovery secondDiscovery = new HeartManDiscovery();
+    List<HeartManDevice> secondList = secondDiscovery.discoverHeartManDevices();
+    assertNotNull(secondList);
+    assertEquals(1, secondList.size());
   }
 
   @Override

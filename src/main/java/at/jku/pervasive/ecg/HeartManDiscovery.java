@@ -2,9 +2,13 @@ package at.jku.pervasive.ecg;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Semaphore;
 
+import javax.bluetooth.BluetoothStateException;
 import javax.bluetooth.DataElement;
 import javax.bluetooth.DeviceClass;
 import javax.bluetooth.DiscoveryAgent;
@@ -15,10 +19,14 @@ import javax.bluetooth.ServiceRecord;
 import javax.bluetooth.UUID;
 import javax.microedition.io.Connector;
 
+import com.intel.bluetooth.BluetoothConsts;
+
 public class HeartManDiscovery {
 
-  public static final List<RemoteDevice> devicesDiscovered = new LinkedList<RemoteDevice>();
-  public static final List<String> serviceFound = new LinkedList<String>();
+  public static final UUID RFCOMM_UUID = BluetoothConsts.RFCOMM_PROTOCOL_UUID;
+
+  private final List<RemoteDevice> devicesDiscovered = new LinkedList<RemoteDevice>();
+  private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
 
   public List<HeartManDevice> discoverHeartManDevices() throws IOException,
       InterruptedException {
@@ -29,6 +37,7 @@ public class HeartManDiscovery {
 
     DiscoveryListener listener = new DiscoveryListener() {
 
+      @Override
       public void deviceDiscovered(RemoteDevice btDevice, DeviceClass cod) {
         System.out.println("Device " + btDevice.getBluetoothAddress()
             + " found");
@@ -40,6 +49,7 @@ public class HeartManDiscovery {
         }
       }
 
+      @Override
       public void inquiryCompleted(int discType) {
         System.out.println("Device Inquiry completed!");
         synchronized (inquiryCompletedEvent) {
@@ -47,27 +57,12 @@ public class HeartManDiscovery {
         }
       }
 
+      @Override
       public void servicesDiscovered(int transID, ServiceRecord[] servRecord) {
-        System.out.println("servicesDiscovered");
-        for (int i = 0; i < servRecord.length; i++) {
-          String url = servRecord[i].getConnectionURL(
-              ServiceRecord.NOAUTHENTICATE_NOENCRYPT, false);
-          if (url == null) {
-            continue;
-          }
-          serviceFound.add(url);
-          DataElement serviceName = servRecord[i].getAttributeValue(0x0100);
-          if (serviceName != null) {
-            System.out.println("service " + serviceName.getValue() + " found "
-                + url);
-          } else {
-            System.out.println("service found " + url);
-          }
-        }
       }
 
+      @Override
       public void serviceSearchCompleted(int transID, int respCode) {
-
       }
     };
 
@@ -81,8 +76,8 @@ public class HeartManDiscovery {
 
         List<HeartManDevice> heartManDevices = new LinkedList<HeartManDevice>();
         for (RemoteDevice device : devicesDiscovered) {
-          heartManDevices
-              .add(new HeartManDevice(device.getFriendlyName(false)));
+          heartManDevices.add(new HeartManDevice(device.getFriendlyName(false),
+              device));
         }
 
         return heartManDevices;
@@ -92,13 +87,13 @@ public class HeartManDiscovery {
     }
   }
 
-  public String getData(long uuid) throws IOException {
+  public double getData(long uuid) throws IOException {
     DiscoveryAgent da = LocalDevice.getLocalDevice().getDiscoveryAgent();
     int security = ServiceRecord.NOAUTHENTICATE_NOENCRYPT;
     String serviceUrl = da.selectService(new UUID(uuid), security, false);
 
     DataInputStream dis = Connector.openDataInputStream(serviceUrl);
-    String read = dis.readUTF();
+    double read = dis.readDouble();
     dis.close();
     return read;
   }
@@ -107,4 +102,85 @@ public class HeartManDiscovery {
     return LocalDevice.isPowerOn();
   }
 
+  public List<ServiceRecord> searchServices(RemoteDevice remoteDevice)
+      throws BluetoothStateException {
+
+    final List<ServiceRecord> serviceRecords = new LinkedList<ServiceRecord>();
+
+    LocalDevice localDevice = LocalDevice.getLocalDevice();
+    DiscoveryAgent discoveryAgent = localDevice.getDiscoveryAgent();
+
+    final List<String> serviceFound = new LinkedList<String>();
+    final Semaphore searchServicesLock = new Semaphore(0);
+
+    final int[] attrs = new int[] { 0x0100 }; // Service name
+    UUID[] serviceUUIDs = new UUID[] { HeartManDiscovery.RFCOMM_UUID };
+    discoveryAgent.searchServices(attrs, serviceUUIDs, remoteDevice,
+        new DiscoveryListener() {
+
+          @Override
+          public void deviceDiscovered(RemoteDevice btDevice, DeviceClass cod) {
+          }
+
+          @Override
+          public void inquiryCompleted(int discType) {
+          }
+
+          @Override
+          public void servicesDiscovered(int transID, ServiceRecord[] servRecord) {
+            for (int i = 0; i < servRecord.length; i++) {
+              String url = servRecord[i].getConnectionURL(
+                  ServiceRecord.NOAUTHENTICATE_NOENCRYPT, false);
+              if (url == null) {
+                continue;
+              }
+              serviceFound.add(url);
+              DataElement serviceName = servRecord[i].getAttributeValue(0x0100);
+
+              if (serviceName != null) {
+                System.out.println("service " + serviceName.getValue()
+                    + " found " + url);
+                serviceRecords.add(servRecord[i]);
+              } else {
+                System.out.println("service found " + url);
+              }
+            }
+          }
+
+          @Override
+          public void serviceSearchCompleted(int transID, int respCode) {
+            searchServicesLock.release();
+          }
+        });
+    try {
+      searchServicesLock.acquire();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    return serviceRecords;
+  }
+
+  public void startListening(HeartManDevice device, HeartManListener listener)
+      throws BluetoothStateException {
+    String address = device.getDevice().getBluetoothAddress();
+    ListeningTask listeningTask = listeningTasks.get(address);
+    boolean start = false;
+    if (listeningTask == null) {
+      List<ServiceRecord> services = searchServices(device.getDevice());
+      listeningTask = new ListeningTask(services.get(0));
+      listeningTasks.put(address, listeningTask);
+      start = true;
+    }
+    listeningTask.addListener(listener);
+    if (start) {
+      listeningTask.start();
+    }
+  }
+
+  public void stopListening(long uuid) {
+    ListeningTask listeningTask = listeningTasks.get(uuid);
+    if (listeningTask != null) {
+      listeningTask.interrupt();
+    }
+  }
 }

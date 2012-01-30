@@ -35,15 +35,29 @@ public class HeartManSimulator {
     }
   }
 
-  public void startDevice(long uuid) throws BluetoothStateException {
-    this.startServer(uuid, new HeartManMock(uuid));
+  public String startDevice(long uuid) throws BluetoothStateException {
+    return startServer(uuid, new HeartManMock(uuid));
   }
 
-  public void startServer(long uuid, HeartManMock mock)
+  public String startServer(long uuid, HeartManMock mock)
       throws BluetoothStateException {
     mocks.put(uuid, mock);
     Thread t = EmulatorTestsHelper.runNewEmulatorStack(mock);
     serverThreads.add(t);
+
+    String mockName = mock.getName();
+    try {
+      List<HeartManDevice> devices = new HeartManDiscovery()
+          .discoverHeartManDevices();
+      for (HeartManDevice device : devices) {
+        if (mockName.equals(device.getName())) {
+          return device.getDevice().getBluetoothAddress();
+        }
+      }
+    } catch (Exception e) {
+    }
+
+    return null;
   }
 
   public void stopServer() throws InterruptedException {

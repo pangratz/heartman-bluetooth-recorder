@@ -34,6 +34,10 @@ public class ListeningTask extends Thread {
     }
   }
 
+  public void clearListener() {
+    this.listeners.clear();
+  }
+
   @Override
   public void run() {
     DataInputStream dis = null;

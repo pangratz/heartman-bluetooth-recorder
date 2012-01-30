@@ -175,7 +175,7 @@ public class HeartManDiscoveryTest extends TestCase {
 
     heartManDiscovery.startListening(address, listener);
     heartManSimulator.sendValue(address, 42);
-    s.acquireUninterruptibly();
+    s.acquire();
 
     assertTrue(listener.invoked);
     listener.reset();
@@ -183,7 +183,6 @@ public class HeartManDiscoveryTest extends TestCase {
     heartManDiscovery.stopListening(address);
 
     heartManSimulator.sendValue(address, 69);
-    s.acquireUninterruptibly();
 
     assertFalse(listener.invoked);
   }

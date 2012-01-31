@@ -55,6 +55,10 @@ public class HeartManDiscoveryTest extends TestCase {
     List<Double> recordings = heartManDiscovery.stopRecording(address);
     assertNotNull(recordings);
     assertEquals(4, recordings.size());
+    assertEquals(1.0, recordings.get(0), 0.1D);
+    assertEquals(2.0, recordings.get(1), 0.1D);
+    assertEquals(3.0, recordings.get(2), 0.1D);
+    assertEquals(4.0, recordings.get(3), 0.1D);
   }
 
   public void testStartListening() throws Exception {

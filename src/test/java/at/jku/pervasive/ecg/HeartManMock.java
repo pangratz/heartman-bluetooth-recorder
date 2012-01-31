@@ -2,6 +2,8 @@ package at.jku.pervasive.ecg;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.Semaphore;
 
 import javax.bluetooth.RemoteDevice;
@@ -15,7 +17,7 @@ public class HeartManMock implements Runnable {
 
   private boolean isRunning;
   private final Semaphore lock = new Semaphore(0);
-  private double nextValue;
+  private final Queue<Double> nextValue = new LinkedList<Double>();
 
   @Override
   public final void run() {
@@ -46,7 +48,7 @@ public class HeartManMock implements Runnable {
           lock.acquire();
           if (isRunning) {
             System.out.println("lock released and got value " + nextValue);
-            dos.writeDouble(nextValue);
+            dos.writeDouble(nextValue.poll());
           }
         } catch (InterruptedException e) {
         }
@@ -73,7 +75,7 @@ public class HeartManMock implements Runnable {
 
   public void sendValue(double value) {
     System.out.println("send value");
-    this.nextValue = value;
+    this.nextValue.add(value);
     lock.release();
   }
 

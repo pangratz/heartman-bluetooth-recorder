@@ -16,6 +16,7 @@ import com.intel.bluetooth.BlueCoveImpl;
 
 public class ListeningTask extends Thread {
 
+  private final String address;
   private final List<IHeartManListener> listeners;
   private final ServiceRecord serviceRecord;
   private final Object stackId;
@@ -24,6 +25,7 @@ public class ListeningTask extends Thread {
     super();
     this.stackId = stackId;
     this.serviceRecord = serviceRecord;
+    this.address = serviceRecord.getHostDevice().getBluetoothAddress();
 
     listeners = new ArrayList<IHeartManListener>(1);
   }
@@ -54,7 +56,7 @@ public class ListeningTask extends Thread {
       while (!isInterrupted()) {
         double value = dis.readDouble();
         for (IHeartManListener listener : listeners) {
-          listener.dataReceived(value);
+          listener.dataReceived(this.address, value);
         }
       }
 

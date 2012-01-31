@@ -41,8 +41,8 @@ public class HeartManDiscoveryTest extends TestCase {
     final Semaphore s = new Semaphore(0);
     TestHeartManListener listener = new TestHeartManListener() {
       @Override
-      public void dataReceived(double value) {
-        super.dataReceived(value);
+      public void dataReceived(String address, double value) {
+        super.dataReceived(address, value);
         s.release();
       }
     };
@@ -70,8 +70,8 @@ public class HeartManDiscoveryTest extends TestCase {
     final Semaphore s = new Semaphore(0);
     TestHeartManListener listener = new TestHeartManListener() {
       @Override
-      public void dataReceived(double value) {
-        super.dataReceived(value);
+      public void dataReceived(String address, double value) {
+        super.dataReceived(address, value);
         s.release(1);
       }
     };
@@ -87,13 +87,16 @@ public class HeartManDiscoveryTest extends TestCase {
     s.acquire();
 
     assertTrue(listener.invoked);
+    assertEquals(first, listener.address);
     assertEquals(42, listener.receivedValue, 0.1D);
     assertEquals(0, s.availablePermits());
 
+    listener.reset();
     heartManSimulator.sendValue(second, 13);
     s.acquire();
 
     assertTrue(listener.invoked);
+    assertEquals(second, listener.address);
     assertEquals(13, listener.receivedValue, 0.1D);
     assertEquals(0, s.availablePermits());
   }
@@ -104,15 +107,15 @@ public class HeartManDiscoveryTest extends TestCase {
     final Semaphore s = new Semaphore(0);
     TestHeartManListener l1 = new TestHeartManListener() {
       @Override
-      public void dataReceived(double value) {
-        super.dataReceived(value);
+      public void dataReceived(String address, double value) {
+        super.dataReceived(address, value);
         s.release(1);
       }
     };
     TestHeartManListener l2 = new TestHeartManListener() {
       @Override
-      public void dataReceived(double value) {
-        super.dataReceived(value);
+      public void dataReceived(String address, double value) {
+        super.dataReceived(address, value);
         s.release(1);
       }
     };
@@ -167,8 +170,8 @@ public class HeartManDiscoveryTest extends TestCase {
     final Semaphore s = new Semaphore(0);
     TestHeartManListener listener = new TestHeartManListener() {
       @Override
-      public void dataReceived(double value) {
-        super.dataReceived(value);
+      public void dataReceived(String address, double value) {
+        super.dataReceived(address, value);
         s.release();
       }
     };

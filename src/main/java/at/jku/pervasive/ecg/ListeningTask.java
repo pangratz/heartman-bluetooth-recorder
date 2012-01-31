@@ -40,6 +40,12 @@ public class ListeningTask extends Thread {
     this.listeners.clear();
   }
 
+  public void removeListener(IHeartManListener listener) {
+    if (listener != null) {
+      this.listeners.remove(listener);
+    }
+  }
+
   @Override
   public void run() {
     DataInputStream dis = null;

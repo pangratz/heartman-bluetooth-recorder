@@ -168,7 +168,7 @@ public class HeartManDiscovery {
     return null;
   }
 
-  public void startListening(String address, HeartManListener listener)
+  public void startListening(String address, IHeartManListener listener)
       throws BluetoothStateException {
     ListeningTask listeningTask = listeningTasks.get(address);
     boolean start = false;

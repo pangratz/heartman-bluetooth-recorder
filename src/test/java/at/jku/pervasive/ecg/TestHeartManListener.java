@@ -1,6 +1,6 @@
 package at.jku.pervasive.ecg;
 
-public class TestHeartManListener implements HeartManListener {
+public class TestHeartManListener implements IHeartManListener {
 
   public boolean invoked = false;
   public double receivedValue = -1.0D;

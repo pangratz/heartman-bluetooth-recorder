@@ -1,8 +1,10 @@
 package at.jku.pervasive.ecg;
 
-import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.bluetooth.BluetoothStateException;
@@ -50,7 +52,7 @@ public class ListeningTask extends Thread {
 
   @Override
   public void run() {
-    DataInputStream dis = null;
+    InputStream is = null;
     StreamConnection conn = null;
 
     try {
@@ -65,24 +67,27 @@ public class ListeningTask extends Thread {
       String url = serviceRecord.getConnectionURL(security, false);
       // InputStream openInputStream = Connector.openInputStream(url);
 
-      dis = Connector.openDataInputStream(url);
+      is = Connector.openInputStream(url);
 
       System.out.println("opened DataInputStream");
 
+      byte[] buff = new byte[256];
       while (!isInterrupted()) {
-        double value = dis.readDouble();
+        is.read(buff);
+        System.out.println(Arrays.toString(buff));
+        double value = ByteBuffer.wrap(buff).getDouble();
         for (IHeartManListener listener : listeners) {
           listener.dataReceived(this.address, value);
         }
       }
 
-      dis.close();
+      is.close();
     } catch (BluetoothStateException e) {
       e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
     } finally {
-      IOUtils.closeQuietly(dis);
+      IOUtils.closeQuietly(is);
       try {
         if (conn != null) {
           conn.close();
@@ -92,5 +97,4 @@ public class ListeningTask extends Thread {
       }
     }
   }
-
 }

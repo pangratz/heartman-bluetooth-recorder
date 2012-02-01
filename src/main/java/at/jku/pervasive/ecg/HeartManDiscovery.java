@@ -117,7 +117,7 @@ public class HeartManDiscovery {
     return LocalDevice.isPowerOn();
   }
 
-  public String pingDevice(String address) throws IOException {
+  public RemoteDevice pingDevice(String address) throws IOException {
     String urlPattern = "btspp://%1$s:1;authenticate=false;encrypt=false;master=false";
     String url = String.format(urlPattern, address);
 
@@ -125,7 +125,8 @@ public class HeartManDiscovery {
 
     Connection connection = Connector.open(url, Connector.READ);
     RemoteDevice remoteDevice = RemoteDevice.getRemoteDevice(connection);
-    return remoteDevice.getFriendlyName(true);
+    RemoteDeviceHelper.authenticate(remoteDevice, "Heartman");
+    return remoteDevice;
   }
 
   public List<ServiceRecord> searchServices(RemoteDevice remoteDevice)
@@ -201,6 +202,22 @@ public class HeartManDiscovery {
       List<ServiceRecord> services = searchServices(address);
 
       ServiceRecord serviceRecord = services.get(0);
+      listeningTask = new ListeningTask(STACK_ID, serviceRecord);
+      listeningTasks.put(address, listeningTask);
+      start = true;
+
+    }
+    listeningTask.addListener(listener);
+    if (start) {
+      listeningTask.start();
+    }
+  }
+
+  public void startListening(String address, IHeartManListener listener,
+      ServiceRecord serviceRecord) throws BluetoothStateException {
+    ListeningTask listeningTask = listeningTasks.get(address);
+    boolean start = false;
+    if (listeningTask == null) {
       listeningTask = new ListeningTask(STACK_ID, serviceRecord);
       listeningTasks.put(address, listeningTask);
       start = true;

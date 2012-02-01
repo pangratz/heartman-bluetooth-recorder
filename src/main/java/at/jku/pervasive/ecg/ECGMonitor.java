@@ -2,10 +2,13 @@ package at.jku.pervasive.ecg;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import javax.bluetooth.RemoteDevice;
+import javax.bluetooth.ServiceRecord;
 import javax.swing.JFrame;
 
 import org.jfree.chart.ChartFactory;
@@ -32,6 +35,7 @@ public class ECGMonitor extends JFrame {
 
     @Override
     public void dataReceived(String address, double value) {
+      this.series.addOrUpdate(new Millisecond(), value);
       this.buffer.add(value);
     }
 
@@ -39,8 +43,7 @@ public class ECGMonitor extends JFrame {
     public void run() {
       while (!isInterrupted()) {
         try {
-          Double value = this.buffer.take();
-          this.series.addOrUpdate(new Millisecond(), value);
+          this.buffer.take();
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
@@ -50,14 +53,26 @@ public class ECGMonitor extends JFrame {
 
   public static void main(String[] args) throws Exception {
     HeartManDiscovery heartManDiscovery = new HeartManDiscovery();
-    heartManDiscovery.discoverHeartManDevices();
+    // heartManDiscovery.discoverHeartManDevices();
 
     String heartman = "00A096203DCB";
+    RemoteDevice remoteDevice = heartManDiscovery.pingDevice(heartman);
+    List<ServiceRecord> services = heartManDiscovery
+        .searchServices(remoteDevice);
+    ServiceRecord serviceRecord = services.get(0);
 
     ECGMonitor monitor = new ECGMonitor();
     monitor.setVisible(true);
 
-    heartManDiscovery.startListening(heartman, monitor.getHeartManListener());
+    heartManDiscovery.startListening(heartman, monitor.getHeartManListener(),
+        serviceRecord);
+    heartManDiscovery.startListening(heartman, new IHeartManListener() {
+
+      @Override
+      public void dataReceived(String address, double value) {
+        System.out.println(address + ": " + value);
+      }
+    }, serviceRecord);
   }
 
   private final ListenForUpdates listenForUpdates;

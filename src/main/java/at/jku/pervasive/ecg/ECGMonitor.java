@@ -1,5 +1,7 @@
 package at.jku.pervasive.ecg;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -9,6 +11,8 @@ import javax.swing.JFrame;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.ValueMarker;
+import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -57,6 +61,12 @@ public class ECGMonitor extends JFrame {
     XYDataset dataset = new TimeSeriesCollection(timeSeries);
     JFreeChart chart = ChartFactory.createTimeSeriesChart("ecg", "time", "V",
         dataset, false, false, false);
+
+    XYPlot xyPlot = (XYPlot) chart.getPlot();
+    ValueMarker baselineMarker = new ValueMarker(0.0D, Color.BLACK,
+        new BasicStroke());
+    xyPlot.addRangeMarker(baselineMarker);
+
     ChartPanel chartPanel = new ChartPanel(chart);
     add(chartPanel);
 

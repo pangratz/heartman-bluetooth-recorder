@@ -52,9 +52,7 @@ public class ECGMonitor extends JFrame {
     setDefaultCloseOperation(EXIT_ON_CLOSE);
 
     TimeSeries timeSeries = new TimeSeries("ecg");
-    long _30seconds = TimeUnit.SECONDS.toMillis(10);
-    System.out.println(_30seconds);
-    timeSeries.setMaximumItemAge(_30seconds);
+    timeSeries.setMaximumItemAge(TimeUnit.SECONDS.toMillis(10));
 
     XYDataset dataset = new TimeSeriesCollection(timeSeries);
     JFreeChart chart = ChartFactory.createTimeSeriesChart("ecg", "time", "V",

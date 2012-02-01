@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.bluetooth.BluetoothStateException;
+import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 import javax.microedition.io.Connector;
 import javax.microedition.io.StreamConnection;
@@ -13,6 +14,7 @@ import javax.microedition.io.StreamConnection;
 import org.apache.commons.io.IOUtils;
 
 import com.intel.bluetooth.BlueCoveImpl;
+import com.intel.bluetooth.RemoteDeviceHelper;
 
 public class ListeningTask extends Thread {
 
@@ -56,8 +58,16 @@ public class ListeningTask extends Thread {
       BlueCoveImpl.setThreadBluetoothStackID(stackId);
 
       int security = ServiceRecord.NOAUTHENTICATE_NOENCRYPT;
+      RemoteDevice host = serviceRecord.getHostDevice();
+      boolean authenticate = RemoteDeviceHelper.authenticate(host, "Heartman");
+      System.out.println("authenticate: " + authenticate);
+
       String url = serviceRecord.getConnectionURL(security, false);
+      // InputStream openInputStream = Connector.openInputStream(url);
+
       dis = Connector.openDataInputStream(url);
+
+      System.out.println("opened DataInputStream");
 
       while (!isInterrupted()) {
         double value = dis.readDouble();

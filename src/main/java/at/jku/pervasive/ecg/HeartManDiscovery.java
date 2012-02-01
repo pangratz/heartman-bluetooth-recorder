@@ -16,9 +16,12 @@ import javax.bluetooth.LocalDevice;
 import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 import javax.bluetooth.UUID;
+import javax.microedition.io.Connection;
+import javax.microedition.io.Connector;
 
 import com.intel.bluetooth.BlueCoveImpl;
 import com.intel.bluetooth.BluetoothConsts;
+import com.intel.bluetooth.RemoteDeviceHelper;
 
 public class HeartManDiscovery {
 
@@ -53,6 +56,11 @@ public class HeartManDiscovery {
       public void deviceDiscovered(RemoteDevice btDevice, DeviceClass cod) {
         System.out.println("Device " + btDevice.getBluetoothAddress()
             + " found");
+        try {
+          RemoteDeviceHelper.authenticate(btDevice, "heartman");
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
         devicesDiscovered.put(btDevice.getBluetoothAddress(), btDevice);
         try {
           System.out.println("     name " + btDevice.getFriendlyName(true));
@@ -88,7 +96,12 @@ public class HeartManDiscovery {
 
         List<HeartManDevice> heartManDevices = new LinkedList<HeartManDevice>();
         for (RemoteDevice device : devicesDiscovered.values()) {
-          String name = device.getFriendlyName(false);
+          String name = "UNKNOWN";
+          try {
+            name = device.getFriendlyName(false);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
           HeartManDevice heartManDevice = new HeartManDevice(name);
           heartManDevices.add(heartManDevice);
         }
@@ -102,6 +115,17 @@ public class HeartManDiscovery {
 
   public boolean isBluetoothEnabled() {
     return LocalDevice.isPowerOn();
+  }
+
+  public String pingDevice(String address) throws IOException {
+    String urlPattern = "btspp://%1$s:1;authenticate=false;encrypt=false;master=false";
+    String url = String.format(urlPattern, address);
+
+    System.out.println("ping device");
+
+    Connection connection = Connector.open(url, Connector.READ);
+    RemoteDevice remoteDevice = RemoteDevice.getRemoteDevice(connection);
+    return remoteDevice.getFriendlyName(true);
   }
 
   public List<ServiceRecord> searchServices(RemoteDevice remoteDevice)

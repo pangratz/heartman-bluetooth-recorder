@@ -48,6 +48,18 @@ public class ECGMonitor extends JFrame {
     }
   }
 
+  public static void main(String[] args) throws Exception {
+    HeartManDiscovery heartManDiscovery = new HeartManDiscovery();
+    heartManDiscovery.discoverHeartManDevices();
+
+    String heartman = "00A096203DCB";
+
+    ECGMonitor monitor = new ECGMonitor();
+    monitor.setVisible(true);
+
+    heartManDiscovery.startListening(heartman, monitor.getHeartManListener());
+  }
+
   private final ListenForUpdates listenForUpdates;
 
   public ECGMonitor() {

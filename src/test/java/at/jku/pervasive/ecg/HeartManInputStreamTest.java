@@ -4,7 +4,7 @@ import java.io.ByteArrayInputStream;
 
 import junit.framework.TestCase;
 
-public class ConvertTest extends TestCase {
+public class HeartManInputStreamTest extends TestCase {
 
   public void testConvertHexToFloat() throws Exception {
     String encodeHexString = "FE70";

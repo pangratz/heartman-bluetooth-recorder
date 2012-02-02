@@ -75,10 +75,10 @@ public class HeartManDiscoveryTest extends TestCase {
       }
     };
     heartManDiscovery.startListening(address, listener);
-    heartManSimulator.sendValue(address, 666.6D);
+    heartManSimulator.sendValue(address, 6.0D);
     s.acquireUninterruptibly();
 
-    assertEquals(666.6D, listener.receivedValue, 0.01D);
+    assertEquals(6.0D, listener.receivedValue, 0.01D);
     System.out.println("finished");
   }
 
@@ -111,21 +111,21 @@ public class HeartManDiscoveryTest extends TestCase {
     heartManDiscovery.startListening(first, listener);
     heartManDiscovery.startListening(second, listener);
 
-    heartManSimulator.sendValue(first, 42);
+    heartManSimulator.sendValue(first, 1.0D);
     s.acquire();
 
     assertTrue(listener.invoked);
     assertEquals(first, listener.address);
-    assertEquals(42, listener.receivedValue, 0.1D);
+    assertEquals(1.0D, listener.receivedValue, 0.1D);
     assertEquals(0, s.availablePermits());
 
     listener.reset();
-    heartManSimulator.sendValue(second, 13);
+    heartManSimulator.sendValue(second, 2.0D);
     s.acquire();
 
     assertTrue(listener.invoked);
     assertEquals(second, listener.address);
-    assertEquals(13, listener.receivedValue, 0.1D);
+    assertEquals(2.0D, listener.receivedValue, 0.1D);
     assertEquals(0, s.availablePermits());
   }
 
@@ -151,13 +151,13 @@ public class HeartManDiscoveryTest extends TestCase {
     heartManDiscovery.discoverHeartManDevices();
 
     heartManDiscovery.startListening(address, l1);
-    heartManSimulator.sendValue(address, 123.4D);
+    heartManSimulator.sendValue(address, 1.0D);
     // wait until listener got invoked
     s.acquire(1);
 
     // l1 invoked - l2 not
     assertTrue(l1.invoked);
-    assertEquals(123.4D, l1.receivedValue, 0.1D);
+    assertEquals(1.0D, l1.receivedValue, 0.1D);
     assertFalse(l2.invoked);
 
     // reset
@@ -166,15 +166,15 @@ public class HeartManDiscoveryTest extends TestCase {
 
     // add second listener
     heartManDiscovery.startListening(address, l2);
-    heartManSimulator.sendValue(address, 567.8D);
+    heartManSimulator.sendValue(address, 5.0D);
     // wait until both are invoked
     s.acquire(2);
 
     // both listeners invoked
     assertTrue(l1.invoked);
-    assertEquals(567.8D, l1.receivedValue, 0.1D);
+    assertEquals(5.0D, l1.receivedValue, 0.1D);
     assertTrue(l2.invoked);
-    assertEquals(567.8D, l2.receivedValue, 0.1D);
+    assertEquals(5.0D, l2.receivedValue, 0.1D);
   }
 
   public void testStartListeringWithInvalidListener() throws Exception {

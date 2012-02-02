@@ -48,7 +48,10 @@ public class HeartManMock implements Runnable {
           lock.acquire();
           if (isRunning) {
             System.out.println("lock released and got value " + nextValue);
-            dos.writeDouble(nextValue.poll());
+            double value = nextValue.poll().doubleValue();
+            value = value / HeartManInputStream.MAGIC_NUMBER;
+            byte[] data = HeartManInputStream.caluclateByteValue(value);
+            dos.write(data);
           }
         } catch (InterruptedException e) {
         }

@@ -20,6 +20,11 @@ public class HeartManInputStream extends BufferedInputStream {
     return value;
   }
 
+  public static byte[] caluclateByteValue(double value) {
+    short s = (short) value;
+    return new byte[] { (byte) ((s & 0xFF00) >> 8), (byte) (s & 0x00FF) };
+  }
+
   private final byte[] buffer = new byte[2];
 
   public HeartManInputStream(InputStream in) {

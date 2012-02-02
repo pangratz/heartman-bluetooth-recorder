@@ -10,8 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.bluetooth.RemoteDevice;
-import javax.bluetooth.ServiceRecord;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -31,10 +29,10 @@ import org.jfree.data.time.TimeSeriesDataItem;
 import org.jfree.data.xy.XYDataset;
 
 public class ECGMonitor extends JFrame {
+
   private class ListenForUpdates extends Thread implements IHeartManListener {
 
     private final List<TimeSeriesDataItem> buffer;
-    private final long last = 0;
     private final TimeSeries series;
 
     public ListenForUpdates(TimeSeries series) {
@@ -78,23 +76,7 @@ public class ECGMonitor extends JFrame {
 
   }
 
-  public static void main(String[] args) throws Exception {
-    HeartManDiscovery heartManDiscovery = new HeartManDiscovery();
-    // heartManDiscovery.discoverHeartManDevices();
-
-    String heartman = "00A096203DCB"; // C102
-    // heartman = "00A096203DD1"; // C157
-    RemoteDevice remoteDevice = heartManDiscovery.pingDevice(heartman);
-    List<ServiceRecord> services = heartManDiscovery
-        .searchServices(remoteDevice);
-    ServiceRecord serviceRecord = services.get(0);
-
-    ECGMonitor monitor = new ECGMonitor();
-    monitor.setVisible(true);
-
-    IHeartManListener hml = monitor.getHeartManListener();
-    heartManDiscovery.startListening(heartman, hml, serviceRecord);
-  }
+  private static final long serialVersionUID = 7543095620229093879L;
 
   private boolean doUpdate = true;
   private boolean filter = true;

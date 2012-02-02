@@ -17,7 +17,6 @@ import org.apache.commons.io.IOUtils;
 public class FileHeartManMock extends HeartManMock {
 
   private final File dataFile;
-  private boolean isRunning;
 
   public FileHeartManMock(File dataFile) {
     super();
@@ -66,11 +65,6 @@ public class FileHeartManMock extends HeartManMock {
       IOUtils.closeQuietly(in);
       IOUtils.closeQuietly(dos);
     }
-  }
-
-  @Override
-  public void stop() {
-    this.isRunning = false;
   }
 
 }

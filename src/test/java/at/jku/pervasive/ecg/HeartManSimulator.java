@@ -1,5 +1,6 @@
 package at.jku.pervasive.ecg;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +36,17 @@ public class HeartManSimulator {
     String address = String.format(baseAddress, count.incrementAndGet());
 
     HeartManMock mock = new HeartManMock();
+    mocks.put(address, mock);
+    Thread t = EmulatorTestsHelper.runNewEmulatorStack(mock);
+    serverThreads.add(t);
+
+    return address;
+  }
+
+  public String createFileDevice(File file) throws BluetoothStateException {
+    String address = String.format(baseAddress, count.incrementAndGet());
+
+    HeartManMock mock = new FileHeartManMock(file);
     mocks.put(address, mock);
     Thread t = EmulatorTestsHelper.runNewEmulatorStack(mock);
     serverThreads.add(t);

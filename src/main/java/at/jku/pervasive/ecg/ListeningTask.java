@@ -2,9 +2,7 @@ package at.jku.pervasive.ecg;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.bluetooth.BluetoothStateException;
@@ -21,6 +19,7 @@ import com.intel.bluetooth.RemoteDeviceHelper;
 public class ListeningTask extends Thread {
 
   private final String address;
+  private final List<IByteListener> byteListeners;
   private final List<IHeartManListener> listeners;
   private final ServiceRecord serviceRecord;
   private final Object stackId;
@@ -32,6 +31,14 @@ public class ListeningTask extends Thread {
     this.address = serviceRecord.getHostDevice().getBluetoothAddress();
 
     listeners = new ArrayList<IHeartManListener>(1);
+    byteListeners = new ArrayList<IByteListener>(1);
+  }
+
+  public void addListener(IByteListener byteListener) {
+    if (byteListener != null) {
+      this.byteListeners.add(byteListener);
+    }
+
   }
 
   public void addListener(IHeartManListener listener) {
@@ -42,6 +49,7 @@ public class ListeningTask extends Thread {
 
   public void clearListener() {
     this.listeners.clear();
+    this.byteListeners.clear();
   }
 
   public void removeListener(IHeartManListener listener) {
@@ -52,7 +60,7 @@ public class ListeningTask extends Thread {
 
   @Override
   public void run() {
-    InputStream is = null;
+    HeartManInputStream is = null;
     StreamConnection conn = null;
 
     try {
@@ -61,23 +69,26 @@ public class ListeningTask extends Thread {
 
       int security = ServiceRecord.NOAUTHENTICATE_NOENCRYPT;
       RemoteDevice host = serviceRecord.getHostDevice();
-      boolean authenticate = RemoteDeviceHelper.authenticate(host, "Heartman");
-      System.out.println("authenticate: " + authenticate);
+      RemoteDeviceHelper.authenticate(host, "Heartman");
 
       String url = serviceRecord.getConnectionURL(security, false);
-      // InputStream openInputStream = Connector.openInputStream(url);
 
-      is = Connector.openInputStream(url);
+      InputStream inStream = Connector.openInputStream(url);
+      is = new HeartManInputStream(inStream);
 
       System.out.println("opened DataInputStream");
-
-      byte[] buff = new byte[256];
+      double ecgValue;
+      long now;
       while (!isInterrupted()) {
-        is.read(buff);
-        System.out.println(Arrays.toString(buff));
-        double value = ByteBuffer.wrap(buff).getDouble();
-        for (IHeartManListener listener : listeners) {
-          listener.dataReceived(this.address, value);
+        now = System.currentTimeMillis();
+        ecgValue = is.nextECGValue(true);
+        for (IHeartManListener l : listeners) {
+          l.dataReceived(address, now, ecgValue);
+        }
+        try {
+          Thread.sleep(5);
+        } catch (Exception e) {
+          e.printStackTrace();
         }
       }
 
@@ -95,6 +106,19 @@ public class ListeningTask extends Thread {
       } catch (IOException e) {
         e.printStackTrace();
       }
+    }
+  }
+
+  protected void dataReceived(long timestamp, byte[] data) {
+    short valueFromEcg = (short) ((data[0] << 8) | (data[1] & 0xff));
+    double value = HeartManInputStream.MAGIC_NUMBER * valueFromEcg;
+
+    for (IByteListener byteListener : byteListeners) {
+      byteListener.bytesReceived(data);
+    }
+
+    for (IHeartManListener listener : listeners) {
+      listener.dataReceived(address, timestamp, value);
     }
   }
 }

@@ -24,7 +24,7 @@ public class ListeningTaskTest extends TestCase {
     ListeningTask listeningTask = new ListeningTask(stackId, serviceRecord);
 
     try {
-      listeningTask.addListener(null);
+      listeningTask.addListener((IHeartManListener) null);
     } catch (Exception e) {
       fail("adding a null listener should not throw an excpetion");
     }

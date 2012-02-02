@@ -7,7 +7,7 @@ public class ECGMonitorTest extends TestCase {
   private HeartManDiscovery heartManDiscovery;
   private HeartManSimulator heartManSimulator;
 
-  public void testECGMonitor() throws Exception {
+  public void NOTtestECGMonitor() throws Exception {
     String address = heartManSimulator.createDevice();
     heartManDiscovery.discoverHeartManDevices();
 

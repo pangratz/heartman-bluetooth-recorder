@@ -14,7 +14,7 @@ public class Recorder implements IHeartManListener {
   }
 
   @Override
-  public void dataReceived(String address, double value) {
+  public void dataReceived(String address, long timestamp, double value) {
     this.recordings.add(value);
   }
 

@@ -57,8 +57,8 @@ public class HeartManDiscovery {
         System.out.println("Device " + btDevice.getBluetoothAddress()
             + " found");
         try {
-          RemoteDeviceHelper.authenticate(btDevice, "heartman");
-        } catch (IOException e) {
+          // RemoteDeviceHelper.authenticate(btDevice, "heartman");
+        } catch (Exception e) {
           e.printStackTrace();
         }
         devicesDiscovered.put(btDevice.getBluetoothAddress(), btDevice);
@@ -194,6 +194,12 @@ public class HeartManDiscovery {
     return null;
   }
 
+  public void startListening(String address, IByteListener bl,
+      ServiceRecord serviceRecord) {
+    ListeningTask listeningTask = getListeningTask(address, serviceRecord);
+    listeningTask.addListener(bl);
+  }
+
   public void startListening(String address, IHeartManListener listener)
       throws BluetoothStateException {
     ListeningTask listeningTask = listeningTasks.get(address);
@@ -254,5 +260,16 @@ public class HeartManDiscovery {
     Recorder recorder = recorders.get(address);
     listeningTasks.get(address).removeListener(recorder);
     return recorder.getRecordings();
+  }
+
+  protected ListeningTask getListeningTask(String address,
+      ServiceRecord serviceRecord) {
+    ListeningTask listeningTask = listeningTasks.get(address);
+    if (listeningTask == null) {
+      listeningTask = new ListeningTask(STACK_ID, serviceRecord);
+      listeningTasks.put(address, listeningTask);
+      listeningTask.start();
+    }
+    return listeningTask;
   }
 }

@@ -20,7 +20,7 @@ public class HeartManMock implements Runnable {
   private final Queue<Double> nextValue = new LinkedList<Double>();
 
   @Override
-  public final void run() {
+  public void run() {
     this.isRunning = true;
 
     System.out.println("started HeartManMock");

@@ -4,26 +4,52 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import javax.bluetooth.RemoteDevice;
+import javax.bluetooth.ServiceRecord;
+
+import org.apache.commons.io.IOUtils;
 
 public class ByteRecorder implements IByteListener {
 
+  public static void main(String[] args) throws Exception {
+    HeartManDiscovery discovery = new HeartManDiscovery();
+
+    String heartman = "00A096203DCB"; // C102
+    RemoteDevice remoteDevice = discovery.pingDevice(heartman);
+    List<ServiceRecord> services = discovery.searchServices(remoteDevice);
+    ServiceRecord serviceRecord = services.get(0);
+
+    File output = new File("recording20s_sleep20ms_2.dat");
+    ByteRecorder recorder = new ByteRecorder(output);
+
+    discovery.startListening(heartman, recorder, serviceRecord);
+    Thread.sleep(TimeUnit.SECONDS.convert(20, TimeUnit.MILLISECONDS));
+    discovery.stopListening(heartman);
+    recorder.close();
+    System.exit(0);
+  }
+
   private boolean closed;
-  private final OutputStream out;
+  private final BufferedOutputStream out;
 
   public ByteRecorder(File output) throws IOException {
     super();
 
-    out = new BufferedOutputStream(new FileOutputStream(output), 81920);
+    FileOutputStream fos = new FileOutputStream(output);
+    out = new BufferedOutputStream(fos);
   }
 
   @Override
   public void bytesReceived(byte[] data) {
     if (!closed) {
       try {
-        out.write(data);
+        IOUtils.write(data, out);
       } catch (IOException e) {
         e.printStackTrace();
+        IOUtils.closeQuietly(out);
       }
     }
   }

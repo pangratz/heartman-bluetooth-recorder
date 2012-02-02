@@ -7,6 +7,19 @@ import java.io.InputStream;
 public class HeartManInputStream extends BufferedInputStream {
 
   public static double MAGIC_NUMBER = 0.00020926D;
+
+  public static final double calculateECGValue(byte[] data) {
+    return calculateECGValue(data, true);
+  }
+
+  public static final double calculateECGValue(byte[] data, boolean mV) {
+    short value = (short) ((data[0] << 8) | (data[1] & 0xff));
+    if (mV) {
+      return MAGIC_NUMBER * value;
+    }
+    return value;
+  }
+
   private final byte[] buffer = new byte[2];
 
   public HeartManInputStream(InputStream in) {

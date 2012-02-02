@@ -60,7 +60,7 @@ public class ListeningTask extends Thread {
 
   @Override
   public void run() {
-    HeartManInputStream is = null;
+    InputStream in = null;
     StreamConnection conn = null;
 
     try {
@@ -73,33 +73,39 @@ public class ListeningTask extends Thread {
 
       String url = serviceRecord.getConnectionURL(security, false);
 
-      InputStream inStream = Connector.openInputStream(url);
-      is = new HeartManInputStream(inStream);
+      in = Connector.openInputStream(url);
 
       System.out.println("opened DataInputStream");
       double ecgValue;
-      long now;
+      long timestamp;
+      byte[] buffer = new byte[2];
       while (!isInterrupted()) {
-        now = System.currentTimeMillis();
-        ecgValue = is.nextECGValue(true);
+        timestamp = System.currentTimeMillis();
+        in.read(buffer);
+        ecgValue = HeartManInputStream.calculateECGValue(buffer, true);
         for (IHeartManListener l : listeners) {
-          l.dataReceived(address, now, ecgValue);
+          l.dataReceived(address, timestamp, ecgValue);
+        }
+        for (IByteListener bL : byteListeners) {
+          bL.bytesReceived(buffer);
         }
         try {
-          Thread.sleep(5);
+          Thread.sleep(20);
         } catch (Exception e) {
           e.printStackTrace();
         }
       }
 
-      is.close();
+      in.close();
     } catch (BluetoothStateException e) {
       e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
     } finally {
-      IOUtils.closeQuietly(is);
       try {
+        if (in != null) {
+          IOUtils.closeQuietly(in);
+        }
         if (conn != null) {
           conn.close();
         }

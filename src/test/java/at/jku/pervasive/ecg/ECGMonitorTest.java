@@ -1,5 +1,11 @@
 package at.jku.pervasive.ecg;
 
+import java.io.File;
+import java.util.List;
+import java.util.concurrent.Semaphore;
+
+import javax.bluetooth.ServiceRecord;
+
 import junit.framework.TestCase;
 
 public class ECGMonitorTest extends TestCase {
@@ -7,19 +13,22 @@ public class ECGMonitorTest extends TestCase {
   private HeartManDiscovery heartManDiscovery;
   private HeartManSimulator heartManSimulator;
 
-  public void NOTtestECGMonitor() throws Exception {
-    String address = heartManSimulator.createDevice();
+  public void testECGMonitor() throws Exception {
+    File file = new File("recording20s_sleep20ms_1.dat");
+    String address = heartManSimulator.createFileDevice(file);
     heartManDiscovery.discoverHeartManDevices();
+    List<ServiceRecord> services = heartManDiscovery.searchServices(address);
+    assertNotNull(services);
+    ServiceRecord service = services.get(0);
 
     ECGMonitor ecgMonitor = new ECGMonitor();
     ecgMonitor.setVisible(true);
 
-    heartManDiscovery.startListening(address, ecgMonitor.getHeartManListener());
+    IHeartManListener l = ecgMonitor.getHeartManListener();
 
-    while (true) {
-      heartManSimulator.sendValue(address, Math.random() - 0.5D);
-      Thread.sleep((long) (Math.random() * 100 + 100));
-    }
+    heartManDiscovery.startListening(address, l, service);
+    Semaphore s = new Semaphore(0);
+    s.acquire();
   }
 
   @Override

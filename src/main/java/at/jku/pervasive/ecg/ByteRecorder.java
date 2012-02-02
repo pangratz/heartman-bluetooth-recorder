@@ -22,11 +22,11 @@ public class ByteRecorder implements IByteListener {
     List<ServiceRecord> services = discovery.searchServices(remoteDevice);
     ServiceRecord serviceRecord = services.get(0);
 
-    File output = new File("recording20s_sleep20ms_2.dat");
+    File output = new File("recording20s_sleep50ms_2.dat");
     ByteRecorder recorder = new ByteRecorder(output);
 
     discovery.startListening(heartman, recorder, serviceRecord);
-    Thread.sleep(TimeUnit.SECONDS.convert(20, TimeUnit.MILLISECONDS));
+    Thread.sleep(TimeUnit.MILLISECONDS.convert(20, TimeUnit.SECONDS));
     discovery.stopListening(heartman);
     recorder.close();
     System.exit(0);

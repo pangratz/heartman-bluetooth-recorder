@@ -17,6 +17,7 @@ import org.apache.commons.io.IOUtils;
 public class FileHeartManMock extends HeartManMock {
 
   private final File dataFile;
+  private boolean isRunning;
 
   public FileHeartManMock(File dataFile) {
     super();
@@ -28,7 +29,6 @@ public class FileHeartManMock extends HeartManMock {
     InputStream in = null;
     OutputStream dos = null;
     try {
-      in = new BufferedInputStream(new FileInputStream(dataFile));
       StreamConnectionNotifier service = null;
 
       String url = "btspp://localhost:"
@@ -45,10 +45,13 @@ public class FileHeartManMock extends HeartManMock {
 
       dos = connection.openOutputStream();
 
-      byte[] buffer = new byte[128];
+      in = new BufferedInputStream(new FileInputStream(dataFile));
+
+      byte[] buffer = new byte[2];
       int len = -1;
       while ((len = in.read(buffer)) != -1) {
         dos.write(buffer, 0, len);
+        dos.flush();
       }
 
       dos.close();
@@ -64,4 +67,10 @@ public class FileHeartManMock extends HeartManMock {
       IOUtils.closeQuietly(dos);
     }
   }
+
+  @Override
+  public void stop() {
+    this.isRunning = false;
+  }
+
 }

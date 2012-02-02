@@ -77,10 +77,12 @@ public class ListeningTask extends Thread {
 
       System.out.println("opened DataInputStream");
       double ecgValue;
-      long timestamp;
+      long timestamp, now = System.currentTimeMillis();
       byte[] buffer = new byte[2];
       while (!isInterrupted()) {
         timestamp = System.currentTimeMillis();
+        System.out.println("diff: " + (timestamp - now));
+        now = timestamp;
         in.read(buffer);
         ecgValue = HeartManInputStream.calculateECGValue(buffer, true);
         for (IHeartManListener l : listeners) {
@@ -90,7 +92,7 @@ public class ListeningTask extends Thread {
           bL.bytesReceived(buffer);
         }
         try {
-          Thread.sleep(20);
+          Thread.sleep(5);
         } catch (Exception e) {
           e.printStackTrace();
         }

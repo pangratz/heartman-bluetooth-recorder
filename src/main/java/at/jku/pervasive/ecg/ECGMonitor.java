@@ -90,7 +90,7 @@ public class ECGMonitor extends JFrame {
     setDefaultCloseOperation(EXIT_ON_CLOSE);
 
     XYSeries series = new XYSeries("ecg");
-    series.setMaximumItemCount(100);
+    series.setMaximumItemCount(1000);
     XYSeriesCollection dataset = new XYSeriesCollection(series);
 
     JFreeChart chart = ChartFactory.createXYLineChart("ecg", "time", "mV",

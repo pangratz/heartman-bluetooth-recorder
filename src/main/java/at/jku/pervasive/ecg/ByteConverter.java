@@ -1,5 +1,6 @@
 package at.jku.pervasive.ecg;
 
+@Deprecated
 public class ByteConverter {
   public static short convertToShort(byte[] data) {
     return (short) ((data[0] << 8) | (data[1] & 0xff));

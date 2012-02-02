@@ -85,7 +85,7 @@ public class HeartManDiscoveryTest extends TestCase {
   public void testStartListeningForInvalidAdress() throws Exception {
     try {
       heartManDiscovery.startListening((String) null,
-          new DefaulHeartManListener());
+          new TestHeartManListener());
       fail("should throw an exception when trying to start listening for a device which is not available");
     } catch (Exception e) {
     }

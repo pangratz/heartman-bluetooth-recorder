@@ -92,7 +92,7 @@ public class ListeningTask extends Thread {
           bL.bytesReceived(buffer);
         }
         try {
-          Thread.sleep(5);
+          Thread.sleep(HeartManDiscovery.UPDATE_RATE);
         } catch (Exception e) {
           e.printStackTrace();
         }

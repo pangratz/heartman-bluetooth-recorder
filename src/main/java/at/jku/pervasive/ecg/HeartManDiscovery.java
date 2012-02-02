@@ -27,6 +27,9 @@ public class HeartManDiscovery {
 
   public static final UUID HEARTMAN_SERVICE_UUID = BluetoothConsts.RFCOMM_PROTOCOL_UUID;
 
+  // check for new ecg values every UPDATE_RATE ms
+  public static final long UPDATE_RATE = 10;
+
   private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
   private final Map<String, Recorder> recorders = new HashMap<String, Recorder>();

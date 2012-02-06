@@ -1,5 +1,8 @@
 package at.jku.pervasive.ecg;
 
+import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
@@ -31,6 +34,35 @@ public class HeartManDiscoveryTest extends TestCase {
     List<ServiceRecord> services = heartManDiscovery.searchServices(address);
     assertNotNull(services);
     assertEquals(1, services.size());
+  }
+
+  public void testListeningOnMoreDevices() throws Exception {
+    final String first = heartManSimulator
+        .createFileDevice(getFile("/recording20s_sleep5ms_1.dat"));
+    final String second = heartManSimulator
+        .createFileDevice(getFile("/recording20s_sleep5ms_2.dat"));
+
+    heartManDiscovery.discoverHeartManDevices();
+
+    final Semaphore s1 = new Semaphore(0);
+    final Semaphore s2 = new Semaphore(0);
+    TestHeartManListener l = new TestHeartManListener() {
+      @Override
+      public void dataReceived(String address, long timestamp, double value) {
+        System.out.printf("%1$s received %2$f\n", address, value);
+        if (address.equals(first)) {
+          s1.release();
+        } else if (address.equals(second)) {
+          s2.release();
+        }
+      }
+    };
+
+    heartManDiscovery.startListening(first, l);
+    heartManDiscovery.startListening(second, l);
+
+    s1.acquire();
+    s2.acquire();
   }
 
   public void testRecording() throws Exception {
@@ -248,6 +280,11 @@ public class HeartManDiscoveryTest extends TestCase {
     List<HeartManDevice> secondList = secondDiscovery.discoverHeartManDevices();
     assertNotNull(secondList);
     assertEquals(1, secondList.size());
+  }
+
+  protected File getFile(String path) throws URISyntaxException {
+    URL url = ECGMonitorMain.class.getResource(path);
+    return new File(url.toURI());
   }
 
   @Override

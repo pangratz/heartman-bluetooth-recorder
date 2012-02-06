@@ -112,7 +112,7 @@ public class ECGMonitor extends JFrame {
     dataset.addSeries(timeSeries1);
     dataset.addSeries(timeSeries2);
     JFreeChart chart = ChartFactory.createTimeSeriesChart("ecg", "time", "mV",
-        dataset, false, true, false);
+        dataset, true, true, false);
 
     XYPlot xyPlot = (XYPlot) chart.getPlot();
     ValueMarker baselineMarker = new ValueMarker(0.0D, Color.BLACK,

@@ -13,7 +13,7 @@ public class ECGMonitorMain {
 
   public static void main(String[] args) throws Exception {
     String address1 = "00A096203DCB"; // HeartMan C102
-    String address2 = "00A096203DCB"; // HeartMan C102
+    String address2 = "00A096203DCD"; // HeartMan C151
 
     HeartManDiscovery heartManDiscovery = new HeartManDiscovery();
     Assert.assertTrue(heartManDiscovery.isBluetoothEnabled());

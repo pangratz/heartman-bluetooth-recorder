@@ -44,6 +44,17 @@ public class HeartManDiscoveryTest extends TestCase {
 
     heartManDiscovery.discoverHeartManDevices();
 
+    List<ServiceRecord> firstServices = heartManDiscovery.searchServices(first);
+    assertNotNull(firstServices);
+    assertTrue(firstServices.size() > 0);
+    ServiceRecord firstServiceRecord = firstServices.get(0);
+
+    List<ServiceRecord> secondServices = heartManDiscovery
+        .searchServices(second);
+    assertNotNull(secondServices);
+    assertTrue(secondServices.size() > 0);
+    ServiceRecord secondServiceRecord = secondServices.get(0);
+
     final Semaphore s1 = new Semaphore(0);
     final Semaphore s2 = new Semaphore(0);
     TestHeartManListener l = new TestHeartManListener() {
@@ -58,8 +69,8 @@ public class HeartManDiscoveryTest extends TestCase {
       }
     };
 
-    heartManDiscovery.startListening(first, l);
-    heartManDiscovery.startListening(second, l);
+    heartManDiscovery.startListening(first, l, firstServiceRecord);
+    heartManDiscovery.startListening(second, l, secondServiceRecord);
 
     s1.acquire();
     s2.acquire();

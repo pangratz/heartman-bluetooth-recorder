@@ -14,7 +14,7 @@ public class ECGMonitorRecordingMain {
 
   public static void main(String[] args) throws Exception {
     HeartManSimulator simulator = new HeartManSimulator();
-    HeartManDiscovery discovery = new HeartManDiscovery();
+    HeartManDiscovery discovery = new HeartManDiscovery(5);
     Assert.assertTrue(discovery.isBluetoothEnabled());
 
     String address1 = startDevice(simulator, "/recording20s_sleep5ms_1.dat");

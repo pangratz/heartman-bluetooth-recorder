@@ -15,13 +15,13 @@ public class ListeningTaskTest extends TestCase {
   private Object stackId;
 
   public void testAddListener() throws Exception {
-    ListeningTask listeningTask = new ListeningTask(stackId, serviceRecord);
+    ListeningTask listeningTask = new ListeningTask(stackId, 10, serviceRecord);
 
     listeningTask.addListener(new TestHeartManListener());
   }
 
   public void testAddNullListener() throws Exception {
-    ListeningTask listeningTask = new ListeningTask(stackId, serviceRecord);
+    ListeningTask listeningTask = new ListeningTask(stackId, 10, serviceRecord);
 
     try {
       listeningTask.addListener((IHeartManListener) null);
@@ -31,7 +31,7 @@ public class ListeningTaskTest extends TestCase {
   }
 
   public void testRemoveListener() throws Exception {
-    ListeningTask listeningTask = new ListeningTask(stackId, serviceRecord);
+    ListeningTask listeningTask = new ListeningTask(stackId, 10, serviceRecord);
 
     TestHeartManListener testHeartManListener = new TestHeartManListener();
     listeningTask.addListener(testHeartManListener);
@@ -43,7 +43,7 @@ public class ListeningTaskTest extends TestCase {
   }
 
   public void testRemoveListenerTwice() throws Exception {
-    ListeningTask listeningTask = new ListeningTask(stackId, serviceRecord);
+    ListeningTask listeningTask = new ListeningTask(stackId, 10, serviceRecord);
 
     TestHeartManListener testHeartManListener = new TestHeartManListener();
     listeningTask.addListener(testHeartManListener);
@@ -56,7 +56,7 @@ public class ListeningTaskTest extends TestCase {
   }
 
   public void testRemoveListenerWhichHasNotBeenAdded() throws Exception {
-    ListeningTask listeningTask = new ListeningTask(stackId, serviceRecord);
+    ListeningTask listeningTask = new ListeningTask(stackId, 10, serviceRecord);
 
     TestHeartManListener testHeartManListener = new TestHeartManListener();
     try {
@@ -67,7 +67,7 @@ public class ListeningTaskTest extends TestCase {
   }
 
   public void testRemoveNullListener() throws Exception {
-    ListeningTask listeningTask = new ListeningTask(stackId, serviceRecord);
+    ListeningTask listeningTask = new ListeningTask(stackId, 10, serviceRecord);
 
     try {
       listeningTask.removeListener(null);

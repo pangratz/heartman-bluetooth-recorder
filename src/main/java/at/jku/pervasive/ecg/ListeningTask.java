@@ -23,10 +23,13 @@ public class ListeningTask extends Thread {
   private final List<IHeartManListener> listeners;
   private final ServiceRecord serviceRecord;
   private final Object stackId;
+  private final long updateRate;
 
-  public ListeningTask(Object stackId, ServiceRecord serviceRecord) {
+  public ListeningTask(Object stackId, long updateRate,
+      ServiceRecord serviceRecord) {
     super();
     this.stackId = stackId;
+    this.updateRate = updateRate;
     this.serviceRecord = serviceRecord;
     this.address = serviceRecord.getHostDevice().getBluetoothAddress();
 
@@ -90,7 +93,7 @@ public class ListeningTask extends Thread {
           bL.bytesReceived(buffer);
         }
         try {
-          Thread.sleep(HeartManDiscovery.UPDATE_RATE);
+          Thread.sleep(updateRate);
         } catch (Exception e) {
           e.printStackTrace();
         }

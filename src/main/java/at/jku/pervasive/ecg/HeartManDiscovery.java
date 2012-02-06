@@ -27,17 +27,23 @@ public class HeartManDiscovery {
 
   public static final UUID HEARTMAN_SERVICE_UUID = BluetoothConsts.RFCOMM_PROTOCOL_UUID;
 
-  // check for new ecg values every UPDATE_RATE ms
-  public static final long UPDATE_RATE = 10;
-
   private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
+
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
   private final Map<String, Recorder> recorders = new HashMap<String, Recorder>();
-
   private final Object STACK_ID;
 
+  // check for new ecg values every UPDATE_RATE ms
+  private final long updateRate;
+
   public HeartManDiscovery() {
+    this(10);
+  }
+
+  public HeartManDiscovery(long updateRate) {
     super();
+
+    this.updateRate = updateRate;
 
     try {
       STACK_ID = BlueCoveImpl.getThreadBluetoothStackID();
@@ -211,7 +217,7 @@ public class HeartManDiscovery {
       List<ServiceRecord> services = searchServices(address);
 
       ServiceRecord serviceRecord = services.get(0);
-      listeningTask = new ListeningTask(STACK_ID, serviceRecord);
+      listeningTask = new ListeningTask(STACK_ID, updateRate, serviceRecord);
       listeningTasks.put(address, listeningTask);
       start = true;
 
@@ -227,7 +233,7 @@ public class HeartManDiscovery {
     ListeningTask listeningTask = listeningTasks.get(address);
     boolean start = false;
     if (listeningTask == null) {
-      listeningTask = new ListeningTask(STACK_ID, serviceRecord);
+      listeningTask = new ListeningTask(STACK_ID, updateRate, serviceRecord);
       listeningTasks.put(address, listeningTask);
       start = true;
 
@@ -269,7 +275,7 @@ public class HeartManDiscovery {
       ServiceRecord serviceRecord) {
     ListeningTask listeningTask = listeningTasks.get(address);
     if (listeningTask == null) {
-      listeningTask = new ListeningTask(STACK_ID, serviceRecord);
+      listeningTask = new ListeningTask(STACK_ID, updateRate, serviceRecord);
       listeningTasks.put(address, listeningTask);
       listeningTask.start();
     }

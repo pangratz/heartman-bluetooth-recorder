@@ -33,7 +33,6 @@ public class ECGMonitor extends JFrame {
 
     private final List<TimeSeriesDataItem> buffer1;
     private final List<TimeSeriesDataItem> buffer2;
-    private String firstAddress;
     private final TimeSeries series1;
     private final TimeSeries series2;
 
@@ -49,6 +48,7 @@ public class ECGMonitor extends JFrame {
 
     @Override
     public void dataReceived(String address, long timestamp, double value) {
+      // System.out.printf("%1$s --> %2$f (%3$d)\n", address, value, timestamp);
       if (!filter || (value < 4.0 && value > -2.0)) {
         Millisecond now = new Millisecond(new Date(timestamp));
         TimeSeriesDataItem dataItem = new TimeSeriesDataItem(now, value);
@@ -64,7 +64,7 @@ public class ECGMonitor extends JFrame {
     public void run() {
       while (!isInterrupted()) {
         try {
-          Thread.sleep(40);
+          Thread.sleep(70);
           // tell plot to repaint
           if (doUpdate) {
             updateSeries(series1, buffer1);
@@ -79,11 +79,11 @@ public class ECGMonitor extends JFrame {
     protected void updateSeries(TimeSeries series,
         List<TimeSeriesDataItem> buffer) {
       series.setNotify(false);
-      synchronized (buffer1) {
-        for (TimeSeriesDataItem dataItem : buffer1) {
+      synchronized (buffer) {
+        for (TimeSeriesDataItem dataItem : buffer) {
           series.add(dataItem);
         }
-        buffer1.clear();
+        buffer.clear();
       }
       series.fireSeriesChanged();
       series.setNotify(true);
@@ -92,6 +92,8 @@ public class ECGMonitor extends JFrame {
   }
 
   private static final long serialVersionUID = 7543095620229093879L;
+
+  public String firstAddress;
 
   private boolean doUpdate = true;
   private boolean filter = true;

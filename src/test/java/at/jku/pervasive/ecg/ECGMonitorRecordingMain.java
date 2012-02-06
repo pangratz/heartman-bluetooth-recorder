@@ -3,8 +3,10 @@ package at.jku.pervasive.ecg;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 
 import javax.bluetooth.BluetoothStateException;
+import javax.bluetooth.ServiceRecord;
 
 import junit.framework.Assert;
 
@@ -20,12 +22,18 @@ public class ECGMonitorRecordingMain {
 
     discovery.discoverHeartManDevices();
 
+    List<ServiceRecord> firstServices = discovery.searchServices(address1);
+    ServiceRecord firstServiceRecord = firstServices.get(0);
+
+    List<ServiceRecord> secondServices = discovery.searchServices(address2);
+    ServiceRecord secondServiceRecord = secondServices.get(0);
+
     ECGMonitor ecgMonitor = new ECGMonitor();
     ecgMonitor.setVisible(true);
 
     IHeartManListener l = ecgMonitor.getHeartManListener();
-    discovery.startListening(address1, l);
-    discovery.startListening(address2, l);
+    discovery.startListening(address1, l, firstServiceRecord);
+    discovery.startListening(address2, l, secondServiceRecord);
   }
 
   private static String startDevice(HeartManSimulator simulator,

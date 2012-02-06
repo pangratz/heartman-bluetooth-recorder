@@ -29,7 +29,6 @@ public class ECGMonitorRecordingMain {
     ServiceRecord secondServiceRecord = secondServices.get(0);
 
     ECGMonitor ecgMonitor = new ECGMonitor();
-    ecgMonitor.firstAddress = address1;
     ecgMonitor.setVisible(true);
 
     IHeartManListener l = ecgMonitor.getHeartManListener();

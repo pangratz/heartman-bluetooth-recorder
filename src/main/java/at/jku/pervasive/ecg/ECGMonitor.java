@@ -19,6 +19,8 @@ import javax.swing.event.ChangeListener;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
@@ -111,21 +113,12 @@ public class ECGMonitor extends JFrame {
     TimeSeries timeSeries2 = new TimeSeries("ecg 2");
     timeSeries2.setMaximumItemAge(TimeUnit.SECONDS.toMillis(5));
 
-    TimeSeriesCollection dataset = new TimeSeriesCollection();
-    dataset.addSeries(timeSeries1);
-    dataset.addSeries(timeSeries2);
-    JFreeChart chart = ChartFactory.createTimeSeriesChart("ecg", "time", "mV",
-        dataset, true, true, false);
-
-    XYPlot xyPlot = (XYPlot) chart.getPlot();
-    ValueMarker baselineMarker = new ValueMarker(0.0D, Color.BLACK,
-        new BasicStroke());
-    xyPlot.addRangeMarker(baselineMarker);
-
-    xyPlot.getRangeAxis().setRange(new Range(-1.0, 3.0));
-
-    ChartPanel chartPanel = new ChartPanel(chart);
-    add(chartPanel, BorderLayout.CENTER);
+    CombinedDomainXYPlot domainXYPlot = new CombinedDomainXYPlot();
+    domainXYPlot.setDomainAxis(new DateAxis());
+    domainXYPlot.add(createXYPlot(timeSeries1));
+    domainXYPlot.add(createXYPlot(timeSeries2));
+    JFreeChart chart = new JFreeChart(domainXYPlot);
+    add(new ChartPanel(chart), BorderLayout.CENTER);
 
     JPanel settingsPanel = createSettingsPanel();
     add(settingsPanel, BorderLayout.SOUTH);
@@ -169,5 +162,18 @@ public class ECGMonitor extends JFrame {
     panel.add(doFilterCheckBox);
 
     return panel;
+  }
+
+  private XYPlot createXYPlot(TimeSeries timeSeries) {
+    JFreeChart chart = ChartFactory.createTimeSeriesChart("ecg", "time", "mV",
+        new TimeSeriesCollection(timeSeries), false, true, false);
+
+    XYPlot xyPlot = (XYPlot) chart.getPlot();
+    ValueMarker baselineMarker = new ValueMarker(0.0D, Color.BLACK,
+        new BasicStroke());
+    xyPlot.addRangeMarker(baselineMarker);
+
+    xyPlot.getRangeAxis().setRange(new Range(-1.0, 3.0));
+    return xyPlot;
   }
 }

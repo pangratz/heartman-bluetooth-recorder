@@ -11,9 +11,13 @@ import junit.framework.Assert;
 
 public class ECGMonitorMain {
 
+  public static final String HEART_MAN_C102 = "00A096203DCB";
+  public static final String HEART_MAN_C151 = "00A096203DCD";
+  public static final String HEART_MAN_C157 = "00A096203DD1";
+
   public static void main(String[] args) throws Exception {
-    String address1 = "00A096203DCB"; // HeartMan C102
-    String address2 = "00A096203DCD"; // HeartMan C151
+    String address1 = HEART_MAN_C102;
+    String address2 = HEART_MAN_C157;
 
     HeartManDiscovery heartManDiscovery = new HeartManDiscovery();
     Assert.assertTrue(heartManDiscovery.isBluetoothEnabled());

@@ -45,12 +45,16 @@ public class FileHeartManMock extends HeartManMock {
       dos = connection.openOutputStream();
 
       in = new BufferedInputStream(new FileInputStream(dataFile));
+      while (in != null) {
 
-      byte[] buffer = new byte[2];
-      int len = -1;
-      while ((len = in.read(buffer)) != -1) {
-        dos.write(buffer, 0, len);
-        dos.flush();
+        byte[] buffer = new byte[2];
+        int len = -1;
+        while ((len = in.read(buffer)) != -1) {
+          dos.write(buffer, 0, len);
+          dos.flush();
+        }
+
+        in = new BufferedInputStream(new FileInputStream(dataFile));
       }
 
       dos.close();
@@ -66,5 +70,4 @@ public class FileHeartManMock extends HeartManMock {
       IOUtils.closeQuietly(dos);
     }
   }
-
 }

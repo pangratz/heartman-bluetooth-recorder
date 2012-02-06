@@ -26,19 +26,24 @@ import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.time.TimeSeriesDataItem;
-import org.jfree.data.xy.XYDataset;
 
 public class ECGMonitor extends JFrame {
 
   private class ListenForUpdates extends Thread implements IHeartManListener {
 
-    private final List<TimeSeriesDataItem> buffer;
-    private final TimeSeries series;
+    private final List<TimeSeriesDataItem> buffer1;
+    private final List<TimeSeriesDataItem> buffer2;
+    private String firstAddress;
+    private final TimeSeries series1;
+    private final TimeSeries series2;
 
-    public ListenForUpdates(TimeSeries series) {
+    public ListenForUpdates(TimeSeries series1, TimeSeries series2) {
       super();
-      this.series = series;
-      this.buffer = Collections
+      this.series1 = series1;
+      this.series2 = series2;
+      this.buffer1 = Collections
+          .synchronizedList(new LinkedList<TimeSeriesDataItem>());
+      this.buffer2 = Collections
           .synchronizedList(new LinkedList<TimeSeriesDataItem>());
     }
 
@@ -46,8 +51,12 @@ public class ECGMonitor extends JFrame {
     public void dataReceived(String address, long timestamp, double value) {
       if (!filter || (value < 4.0 && value > -2.0)) {
         Millisecond now = new Millisecond(new Date(timestamp));
-        this.buffer.add(new TimeSeriesDataItem(now, value));
-        // last = timestamp;
+        TimeSeriesDataItem dataItem = new TimeSeriesDataItem(now, value);
+        if (address.equals(firstAddress)) {
+          this.buffer1.add(dataItem);
+        } else {
+          this.buffer2.add(dataItem);
+        }
       }
     }
 
@@ -58,20 +67,26 @@ public class ECGMonitor extends JFrame {
           Thread.sleep(40);
           // tell plot to repaint
           if (doUpdate) {
-            series.setNotify(false);
-            synchronized (buffer) {
-              for (TimeSeriesDataItem dataItem : buffer) {
-                series.add(dataItem);
-              }
-              buffer.clear();
-            }
-            series.fireSeriesChanged();
-            series.setNotify(true);
+            updateSeries(series1, buffer1);
+            updateSeries(series2, buffer2);
           }
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
       }
+    }
+
+    protected void updateSeries(TimeSeries series,
+        List<TimeSeriesDataItem> buffer) {
+      series.setNotify(false);
+      synchronized (buffer1) {
+        for (TimeSeriesDataItem dataItem : buffer1) {
+          series.add(dataItem);
+        }
+        buffer1.clear();
+      }
+      series.fireSeriesChanged();
+      series.setNotify(true);
     }
 
   }
@@ -88,10 +103,14 @@ public class ECGMonitor extends JFrame {
     setDefaultCloseOperation(EXIT_ON_CLOSE);
     setLayout(new BorderLayout());
 
-    TimeSeries timeSeries = new TimeSeries("ecg");
-    timeSeries.setMaximumItemAge(TimeUnit.SECONDS.toMillis(5));
+    TimeSeries timeSeries1 = new TimeSeries("ecg 1");
+    timeSeries1.setMaximumItemAge(TimeUnit.SECONDS.toMillis(5));
+    TimeSeries timeSeries2 = new TimeSeries("ecg 2");
+    timeSeries2.setMaximumItemAge(TimeUnit.SECONDS.toMillis(5));
 
-    XYDataset dataset = new TimeSeriesCollection(timeSeries);
+    TimeSeriesCollection dataset = new TimeSeriesCollection();
+    dataset.addSeries(timeSeries1);
+    dataset.addSeries(timeSeries2);
     JFreeChart chart = ChartFactory.createTimeSeriesChart("ecg", "time", "mV",
         dataset, false, true, false);
 
@@ -108,7 +127,7 @@ public class ECGMonitor extends JFrame {
     JPanel settingsPanel = createSettingsPanel();
     add(settingsPanel, BorderLayout.SOUTH);
 
-    listenForUpdates = new ListenForUpdates(timeSeries);
+    listenForUpdates = new ListenForUpdates(timeSeries1, timeSeries2);
     listenForUpdates.start();
 
     pack();

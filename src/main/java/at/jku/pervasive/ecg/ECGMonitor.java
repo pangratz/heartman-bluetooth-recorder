@@ -5,10 +5,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -25,29 +23,26 @@ import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
+import org.jfree.data.time.DynamicTimeSeriesCollection;
 import org.jfree.data.time.Millisecond;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
-import org.jfree.data.time.TimeSeriesDataItem;
 
 public class ECGMonitor extends JFrame {
 
   private class ListenForUpdates extends Thread implements IHeartManListener {
 
-    private final List<TimeSeriesDataItem> buffer1;
-    private final List<TimeSeriesDataItem> buffer2;
+    private final List<Float> buffer1;
+    private final List<Float> buffer2;
     private String firstAddress;
-    private final TimeSeries series1;
-    private final TimeSeries series2;
+    private final DynamicTimeSeriesCollection series1;
+    private final DynamicTimeSeriesCollection series2;
 
-    public ListenForUpdates(TimeSeries series1, TimeSeries series2) {
+    public ListenForUpdates(DynamicTimeSeriesCollection timeSeries1,
+        DynamicTimeSeriesCollection timeSeries2) {
       super();
-      this.series1 = series1;
-      this.series2 = series2;
-      this.buffer1 = Collections
-          .synchronizedList(new LinkedList<TimeSeriesDataItem>());
-      this.buffer2 = Collections
-          .synchronizedList(new LinkedList<TimeSeriesDataItem>());
+      this.series1 = timeSeries1;
+      this.series2 = timeSeries2;
+      this.buffer1 = Collections.synchronizedList(new LinkedList<Float>());
+      this.buffer2 = Collections.synchronizedList(new LinkedList<Float>());
     }
 
     @Override
@@ -56,12 +51,10 @@ public class ECGMonitor extends JFrame {
         firstAddress = address;
       }
       if (!filter || (value < 4.0 && value > -2.0)) {
-        Millisecond now = new Millisecond(new Date(timestamp));
-        TimeSeriesDataItem dataItem = new TimeSeriesDataItem(now, value);
         if (address.equals(firstAddress)) {
-          this.buffer1.add(dataItem);
+          this.buffer1.add((float) value);
         } else {
-          this.buffer2.add(dataItem);
+          this.buffer2.add((float) value);
         }
       }
     }
@@ -87,17 +80,16 @@ public class ECGMonitor extends JFrame {
       }
     }
 
-    protected void updateSeries(TimeSeries series,
-        List<TimeSeriesDataItem> buffer) {
-      series.setNotify(false);
+    protected void updateSeries(DynamicTimeSeriesCollection series,
+        List<Float> buffer) {
       synchronized (buffer) {
-        for (TimeSeriesDataItem dataItem : buffer) {
-          series.addOrUpdate(dataItem);
+        float[] data = new float[buffer.size()];
+        int index = 0;
+        for (Float value : buffer) {
+          data[index++] = value.floatValue();
         }
-        buffer.clear();
+        series.appendData(data);
       }
-      series.fireSeriesChanged();
-      series.setNotify(true);
     }
 
   }
@@ -114,10 +106,13 @@ public class ECGMonitor extends JFrame {
     setDefaultCloseOperation(EXIT_ON_CLOSE);
     setLayout(new BorderLayout());
 
-    TimeSeries timeSeries1 = new TimeSeries("ecg 1");
-    timeSeries1.setMaximumItemAge(TimeUnit.SECONDS.toMillis(5));
-    TimeSeries timeSeries2 = new TimeSeries("ecg 2");
-    timeSeries2.setMaximumItemAge(TimeUnit.SECONDS.toMillis(5));
+    DynamicTimeSeriesCollection timeSeries1 = new DynamicTimeSeriesCollection(
+        1, 5 * 1000, new Millisecond());
+    DynamicTimeSeriesCollection timeSeries2 = new DynamicTimeSeriesCollection(
+        1, 5 * 1000, new Millisecond());
+
+    timeSeries1.appendData(new float[] { 1.0f });
+    timeSeries2.appendData(new float[] { 1.0f });
 
     CombinedDomainXYPlot domainXYPlot = new CombinedDomainXYPlot();
     domainXYPlot.setDomainAxis(new DateAxis());
@@ -170,9 +165,9 @@ public class ECGMonitor extends JFrame {
     return panel;
   }
 
-  private XYPlot createXYPlot(TimeSeries timeSeries) {
+  private XYPlot createXYPlot(DynamicTimeSeriesCollection timeSeries) {
     JFreeChart chart = ChartFactory.createTimeSeriesChart("ecg", "time", "mV",
-        new TimeSeriesCollection(timeSeries), false, true, false);
+        timeSeries, false, true, false);
 
     XYPlot xyPlot = (XYPlot) chart.getPlot();
     ValueMarker baselineMarker = new ValueMarker(0.0D, Color.BLACK,

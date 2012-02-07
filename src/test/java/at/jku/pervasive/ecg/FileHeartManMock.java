@@ -52,10 +52,8 @@ public class FileHeartManMock extends HeartManMock {
       while (in != null) {
 
         byte[] buffer = new byte[2];
-        int len = -1;
-        while ((len = in.read(buffer)) != -1) {
-          dos.write(buffer, 0, len);
-          dos.flush();
+        while (in.read(buffer) != -1) {
+          IOUtils.write(buffer, dos);
         }
 
         in = new ByteArrayInputStream(data.toByteArray());

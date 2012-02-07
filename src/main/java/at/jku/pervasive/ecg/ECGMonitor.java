@@ -4,6 +4,8 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.text.FieldPosition;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -21,6 +23,8 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.DateAxis;
+import org.jfree.chart.axis.DateTickUnit;
+import org.jfree.chart.axis.DateTickUnitType;
 import org.jfree.chart.plot.CombinedDomainXYPlot;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
@@ -29,6 +33,9 @@ import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.time.TimeSeriesDataItem;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 
 public class ECGMonitor extends JFrame {
 
@@ -102,6 +109,27 @@ public class ECGMonitor extends JFrame {
 
   }
 
+  private final class SecondsAgoFormatter extends SimpleDateFormat {
+
+    private static final long serialVersionUID = -8451973913729114282L;
+    private final PeriodFormatter secondsAgoFormatter;
+
+    public SecondsAgoFormatter() {
+      super();
+
+      secondsAgoFormatter = new PeriodFormatterBuilder().appendPrefix("-")
+          .appendSeconds().printZeroNever().toFormatter();
+    }
+
+    @Override
+    public StringBuffer format(Date date, StringBuffer toAppendTo,
+        FieldPosition pos) {
+      Period p = new Period(System.currentTimeMillis() - date.getTime());
+      String s = secondsAgoFormatter.print(p);
+      return toAppendTo.append(s);
+    }
+  }
+
   private static final long serialVersionUID = 7543095620229093879L;
 
   private boolean doUpdate = true;
@@ -120,7 +148,10 @@ public class ECGMonitor extends JFrame {
     timeSeries2.setMaximumItemAge(TimeUnit.SECONDS.toMillis(5));
 
     CombinedDomainXYPlot domainXYPlot = new CombinedDomainXYPlot();
-    domainXYPlot.setDomainAxis(new DateAxis());
+    DateAxis dateAxis = new DateAxis("seconds ago");
+    dateAxis.setTickUnit(new DateTickUnit(DateTickUnitType.SECOND, 1));
+    dateAxis.setDateFormatOverride(new SecondsAgoFormatter());
+    domainXYPlot.setDomainAxis(dateAxis);
     domainXYPlot.add(createXYPlot(timeSeries1));
     domainXYPlot.add(createXYPlot(timeSeries2));
     JFreeChart chart = new JFreeChart(domainXYPlot);

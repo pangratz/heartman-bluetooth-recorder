@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -69,11 +70,16 @@ public class ECGMonitor extends JFrame {
     public void run() {
       while (!isInterrupted()) {
         try {
-          Thread.sleep(200);
+          Thread.sleep(50);
           // tell plot to repaint
           if (doUpdate) {
-            updateSeries(series1, buffer1);
-            updateSeries(series2, buffer2);
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                updateSeries(series1, buffer1);
+                updateSeries(series2, buffer2);
+              };
+            });
           }
         } catch (InterruptedException e) {
           e.printStackTrace();

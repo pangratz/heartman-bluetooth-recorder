@@ -1,6 +1,7 @@
 package at.jku.pervasive.ecg;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -44,7 +45,10 @@ public class FileHeartManMock extends HeartManMock {
 
       dos = connection.openOutputStream();
 
-      in = new BufferedInputStream(new FileInputStream(dataFile));
+      ByteArrayOutputStream data = new ByteArrayOutputStream();
+      IOUtils.copy(new FileInputStream(dataFile), data);
+
+      in = new ByteArrayInputStream(data.toByteArray());
       while (in != null) {
 
         byte[] buffer = new byte[2];
@@ -54,7 +58,7 @@ public class FileHeartManMock extends HeartManMock {
           dos.flush();
         }
 
-        in = new BufferedInputStream(new FileInputStream(dataFile));
+        in = new ByteArrayInputStream(data.toByteArray());
       }
 
       dos.close();

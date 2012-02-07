@@ -86,7 +86,7 @@ public class ECGMonitor extends JFrame {
       series.setNotify(false);
       synchronized (buffer) {
         for (TimeSeriesDataItem dataItem : buffer) {
-          series.add(dataItem);
+          series.addOrUpdate(dataItem);
         }
         buffer.clear();
       }

@@ -15,7 +15,7 @@ import org.apache.commons.io.IOUtils;
 public class ByteRecorder implements IByteListener {
 
   public static void main(String[] args) throws Exception {
-    HeartManDiscovery discovery = new HeartManDiscovery();
+    HeartManDiscovery discovery = HeartManDiscovery.getInstance();
 
     String heartman = "00A096203DCB"; // C102
     RemoteDevice remoteDevice = discovery.pingDevice(heartman);

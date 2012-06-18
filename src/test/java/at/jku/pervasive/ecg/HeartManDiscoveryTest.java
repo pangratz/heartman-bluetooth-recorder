@@ -8,11 +8,27 @@ import java.util.concurrent.Semaphore;
 
 import javax.bluetooth.ServiceRecord;
 
+import org.junit.Assert;
 import junit.framework.TestCase;
 
 public class HeartManDiscoveryTest extends TestCase {
 
+  private class TestThread extends Thread {
+
+    private boolean error;
+
+    public boolean isError() {
+      return error;
+    }
+
+    public void setError(boolean error) {
+      this.error = error;
+    }
+
+  }
+
   private HeartManDiscovery heartManDiscovery;
+
   private HeartManSimulator heartManSimulator;
 
   public void testDiscoverHeartManDevices() throws Exception {
@@ -78,7 +94,10 @@ public class HeartManDiscoveryTest extends TestCase {
 
   public void testRecording() throws Exception {
     String address = heartManSimulator.createDevice();
-    heartManDiscovery.discoverHeartManDevices();
+    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
+    assertNotNull(devices);
+    assertEquals(1, devices.size());
+
     heartManDiscovery.startRecording(address);
 
     final Semaphore s = new Semaphore(0);
@@ -281,16 +300,53 @@ public class HeartManDiscoveryTest extends TestCase {
 
   public void testTwoHeartManDiscoveryInstances() throws Exception {
     heartManSimulator.createDevice();
+    final Semaphore s = new Semaphore(-1);
 
-    List<HeartManDevice> firstList = heartManDiscovery
-        .discoverHeartManDevices();
-    assertNotNull(firstList);
-    assertEquals(1, firstList.size());
+    TestThread t1 = new TestThread() {
+      @Override
+      public void run() {
+        List<HeartManDevice> firstList;
+        try {
+          firstList = heartManDiscovery.discoverHeartManDevices();
+          Assert.assertNotNull(firstList);
+          Assert.assertEquals(1, firstList.size());
+        } catch (Exception e) {
+          this.setError(true);
+          e.printStackTrace();
+        } finally {
+          s.release();
+        }
+      }
+    };
 
-    HeartManDiscovery secondDiscovery = new HeartManDiscovery();
-    List<HeartManDevice> secondList = secondDiscovery.discoverHeartManDevices();
-    assertNotNull(secondList);
-    assertEquals(1, secondList.size());
+    TestThread t2 = new TestThread() {
+      @Override
+      public void run() {
+        try {
+          HeartManDiscovery secondDiscovery = HeartManDiscovery.getInstance();
+          List<HeartManDevice> secondList = secondDiscovery
+              .discoverHeartManDevices();
+          Assert.assertNotNull(secondList);
+          Assert.assertEquals(1, secondList.size());
+        } catch (Exception e) {
+          this.setError(true);
+          e.printStackTrace();
+        } finally {
+          s.release();
+        }
+      }
+    };
+
+    t1.start();
+    t2.start();
+
+    t1.join();
+    t2.join();
+
+    s.acquire();
+
+    assertFalse(t1.isError());
+    assertFalse(t2.isError());
   }
 
   protected File getFile(String path) throws URISyntaxException {
@@ -304,7 +360,7 @@ public class HeartManDiscoveryTest extends TestCase {
 
     heartManSimulator = new HeartManSimulator();
 
-    heartManDiscovery = new HeartManDiscovery();
+    heartManDiscovery = HeartManDiscovery.getInstance();
     assertTrue(heartManDiscovery.isBluetoothEnabled());
   }
 
@@ -312,6 +368,7 @@ public class HeartManDiscoveryTest extends TestCase {
   protected void tearDown() throws Exception {
     super.tearDown();
 
+    heartManDiscovery.tearDown();
     heartManDiscovery = null;
 
     heartManSimulator.stopServer();

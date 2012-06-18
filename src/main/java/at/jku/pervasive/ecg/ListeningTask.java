@@ -68,7 +68,7 @@ public class ListeningTask extends Thread {
 
     try {
 
-      BlueCoveImpl.setThreadBluetoothStackID(stackId);
+      BlueCoveImpl.setDefaultThreadBluetoothStackID(stackId);
 
       int security = ServiceRecord.NOAUTHENTICATE_NOENCRYPT;
       RemoteDevice host = serviceRecord.getHostDevice();

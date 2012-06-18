@@ -27,33 +27,45 @@ public class HeartManDiscovery {
 
   public static final UUID HEARTMAN_SERVICE_UUID = BluetoothConsts.RFCOMM_PROTOCOL_UUID;
 
-  private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
+  public static Object STACK_ID;
 
+  private static final HeartManDiscovery INSTANCE = new HeartManDiscovery();
+
+  public static final HeartManDiscovery getInstance() {
+    return INSTANCE;
+  }
+
+  private final Semaphore deviceInquiry = new Semaphore(1);
+
+  private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
   private final Map<String, Recorder> recorders = new HashMap<String, Recorder>();
-  private final Object STACK_ID;
 
   // check for new ecg values every UPDATE_RATE ms
   private final long updateRate;
 
-  public HeartManDiscovery() {
+  private HeartManDiscovery() {
     this(10);
   }
 
-  public HeartManDiscovery(long updateRate) {
+  private HeartManDiscovery(long updateRate) {
     super();
 
     this.updateRate = updateRate;
 
     try {
+      BlueCoveImpl.useThreadLocalBluetoothStack();
       STACK_ID = BlueCoveImpl.getThreadBluetoothStackID();
-    } catch (BluetoothStateException e) {
+      BlueCoveImpl.setDefaultThreadBluetoothStackID(STACK_ID);
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
 
   public List<HeartManDevice> discoverHeartManDevices() throws IOException,
       InterruptedException {
+
+    BlueCoveImpl.setDefaultThreadBluetoothStackID(STACK_ID);
 
     final Object inquiryCompletedEvent = new Object();
 
@@ -82,6 +94,7 @@ public class HeartManDiscovery {
       public void inquiryCompleted(int discType) {
         System.out.println("Device Inquiry completed!");
         synchronized (inquiryCompletedEvent) {
+          deviceInquiry.release();
           inquiryCompletedEvent.notifyAll();
         }
       }
@@ -96,6 +109,7 @@ public class HeartManDiscovery {
     };
 
     synchronized (inquiryCompletedEvent) {
+      deviceInquiry.acquire();
       boolean started = LocalDevice.getLocalDevice().getDiscoveryAgent()
           .startInquiry(DiscoveryAgent.GIAC, listener);
       if (started) {
@@ -262,6 +276,8 @@ public class HeartManDiscovery {
     if (listeningTask != null) {
       listeningTask.clearListener();
       listeningTask.interrupt();
+      listeningTask = null;
+      listeningTasks.put(address, null);
     }
   }
 
@@ -269,6 +285,12 @@ public class HeartManDiscovery {
     Recorder recorder = recorders.get(address);
     listeningTasks.get(address).removeListener(recorder);
     return recorder.getRecordings();
+  }
+
+  public void tearDown() {
+    for (String address : listeningTasks.keySet()) {
+      stopListening(address);
+    }
   }
 
   protected ListeningTask getListeningTask(String address,

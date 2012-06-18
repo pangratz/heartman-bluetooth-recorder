@@ -19,7 +19,7 @@ public class ECGMonitorMain {
     String address1 = HEART_MAN_C102;
     String address2 = HEART_MAN_C157;
 
-    HeartManDiscovery heartManDiscovery = new HeartManDiscovery();
+    HeartManDiscovery heartManDiscovery = HeartManDiscovery.getInstance();
     Assert.assertTrue(heartManDiscovery.isBluetoothEnabled());
 
     ServiceRecord serviceRecord1 = getServiceRecord(address1, heartManDiscovery);

@@ -81,7 +81,7 @@ public class ListeningTaskTest extends TestCase {
     super.setUp();
 
     heartManSimulator = new HeartManSimulator();
-    HeartManDiscovery heartManDiscovery = new HeartManDiscovery();
+    HeartManDiscovery heartManDiscovery = HeartManDiscovery.getInstance();
 
     String address = heartManSimulator.createDevice();
     heartManDiscovery.discoverHeartManDevices();

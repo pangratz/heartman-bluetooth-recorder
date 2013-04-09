@@ -79,6 +79,7 @@
 				<artifactId>site-maven-plugin</artifactId>
 				<version>0.7</version>
 				<configuration>
+					<merge>true</merge>
 					<message>Maven artifacts for ${project.version}</message>  <!-- git commit message -->
 					<noJekyll>true</noJekyll>                                  <!-- disable webpage processing -->
 					<outputDirectory>${project.build.directory}/mvn-repo</outputDirectory> <!-- matches distribution management repository url above -->

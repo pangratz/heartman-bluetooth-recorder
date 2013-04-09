@@ -125,7 +125,7 @@ public class HeartManDiscovery {
           } catch (Exception e) {
             e.printStackTrace();
           }
-          HeartManDevice heartManDevice = new HeartManDevice(name);
+          HeartManDevice heartManDevice = new HeartManDevice(device.getBluetoothAddress(), name);
           heartManDevices.add(heartManDevice);
         }
 

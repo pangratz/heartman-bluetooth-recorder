@@ -18,6 +18,9 @@ import com.intel.bluetooth.RemoteDeviceHelper;
 
 public class ListeningTask extends Thread {
 
+  // how many data points shall be fetched per read of ECG input stream?
+  public final static int DATA_POINTS_PER_READ = 50;
+
   private final String address;
   private final List<IByteListener> byteListeners;
   private final List<IHeartManListener> listeners;
@@ -25,8 +28,7 @@ public class ListeningTask extends Thread {
   private final Object stackId;
   private final long updateRate;
 
-  public ListeningTask(Object stackId, long updateRate,
-      ServiceRecord serviceRecord) {
+  public ListeningTask(Object stackId, long updateRate, ServiceRecord serviceRecord) {
     super();
     this.stackId = stackId;
     this.updateRate = updateRate;
@@ -80,21 +82,26 @@ public class ListeningTask extends Thread {
       in = conn.openInputStream();
       System.out.println("opened InputStream " + url);
 
-      double ecgValue;
-      long timestamp;
-      byte[] buffer = new byte[2];
+      // 2 bytes per data point
+      byte[] buffer = new byte[DATA_POINTS_PER_READ * 2];
       while (!isInterrupted()) {
-        timestamp = System.currentTimeMillis();
-        in.read(buffer);
-        ecgValue = HeartManInputStream.calculateECGValue(buffer, true);
-        for (IHeartManListener l : listeners) {
-          l.dataReceived(address, timestamp, ecgValue);
+        double ecgValue;
+        int read = in.read(buffer);
+        int readDataPoints = read / 2;
+        long timestamp = System.currentTimeMillis();
+
+        for (int i = 0; i < readDataPoints; i++) {
+          ecgValue = HeartManInputStream.calculateECGValue(new byte[] { buffer[2 * i], buffer[2 * i + 1] }, true);
+          for (IHeartManListener l : listeners) {
+            l.dataReceived(address, timestamp + i * updateRate, ecgValue);
+          }
+          for (IByteListener bL : byteListeners) {
+            bL.bytesReceived(buffer);
+          }
         }
-        for (IByteListener bL : byteListeners) {
-          bL.bytesReceived(buffer);
-        }
+
         try {
-          Thread.sleep(updateRate);
+          Thread.sleep(updateRate * DATA_POINTS_PER_READ);
         } catch (Exception e) {
           e.printStackTrace();
         }

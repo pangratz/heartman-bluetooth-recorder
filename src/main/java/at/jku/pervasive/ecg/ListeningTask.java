@@ -76,9 +76,10 @@ public class ListeningTask extends Thread {
 
       String url = serviceRecord.getConnectionURL(security, false);
 
-      in = Connector.openInputStream(url);
+      conn = (StreamConnection) Connector.open(url, Connector.READ);
+      in = conn.openInputStream();
+      System.out.println("opened InputStream " + url);
 
-      System.out.println("opened DataInputStream");
       double ecgValue;
       long timestamp;
       byte[] buffer = new byte[2];
@@ -105,15 +106,14 @@ public class ListeningTask extends Thread {
     } catch (IOException e) {
       e.printStackTrace();
     } finally {
-      try {
-        if (in != null) {
-          IOUtils.closeQuietly(in);
-        }
-        if (conn != null) {
+      if (in != null) {
+        IOUtils.closeQuietly(in);
+      }
+      if (conn != null) {
+        try {
           conn.close();
+        } catch (Exception e) {
         }
-      } catch (IOException e) {
-        e.printStackTrace();
       }
     }
   }

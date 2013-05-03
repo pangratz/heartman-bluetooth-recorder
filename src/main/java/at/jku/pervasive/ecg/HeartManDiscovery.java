@@ -37,6 +37,7 @@ public class HeartManDiscovery {
 
   private final Semaphore deviceInquiry = new Semaphore(1);
 
+  private final Map<String, List<ServiceRecord>> servicesDiscovered = new HashMap<String, List<ServiceRecord>>();
   private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
   private final Map<String, Recorder> recorders = new HashMap<String, Recorder>();
@@ -129,6 +130,10 @@ public class HeartManDiscovery {
           heartManDevices.add(heartManDevice);
         }
 
+        for (HeartManDevice device : heartManDevices) {
+          searchServices(device.getAddress());
+        }
+
         return heartManDevices;
       }
 
@@ -212,7 +217,12 @@ public class HeartManDiscovery {
 
     RemoteDevice device = devicesDiscovered.get(address);
     if (device != null) {
-      return searchServices(device);
+      List<ServiceRecord> serviceRecords = servicesDiscovered.get(address);
+      if (serviceRecords == null) {
+        serviceRecords = searchServices(device);
+        servicesDiscovered.put(address, serviceRecords);
+      }
+      return serviceRecords;
     }
     return null;
   }

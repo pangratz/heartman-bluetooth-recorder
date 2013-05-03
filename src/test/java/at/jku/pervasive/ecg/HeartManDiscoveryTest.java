@@ -191,6 +191,45 @@ public class HeartManDiscoveryTest extends TestCase {
     assertEquals(0, s.availablePermits());
   }
 
+  public void testStartListeningForDeviceWhenAlreadyListeningOnOther() throws Exception {
+    String first = heartManSimulator.createDevice();
+    String second = heartManSimulator.createDevice();
+
+    final Semaphore s = new Semaphore(0);
+    TestHeartManListener listener = new TestHeartManListener() {
+      @Override
+      public void dataReceived(String address, long timestamp, double value) {
+        super.dataReceived(address, timestamp, value);
+        s.release(1);
+      }
+    };
+
+    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
+    assertNotNull(devices);
+    assertEquals(2, devices.size());
+
+    heartManDiscovery.startListening(first, listener);
+
+    heartManSimulator.sendValue(first, 1.0D);
+    s.acquire();
+
+    assertTrue(listener.invoked);
+    assertEquals(first, listener.address);
+    assertEquals(1.0D, listener.receivedValue, 0.1D);
+    assertEquals(0, s.availablePermits());
+
+    heartManDiscovery.startListening(second, listener);
+
+    listener.reset();
+    heartManSimulator.sendValue(second, 2.0D);
+    s.acquire();
+
+    assertTrue(listener.invoked);
+    assertEquals(second, listener.address);
+    assertEquals(2.0D, listener.receivedValue, 0.1D);
+    assertEquals(0, s.availablePermits());
+  }
+
   public void testStartListeningWithMoreListeners() throws Exception {
     String address = heartManSimulator.createDevice();
 

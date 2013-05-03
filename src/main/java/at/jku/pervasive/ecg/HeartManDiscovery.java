@@ -46,7 +46,7 @@ public class HeartManDiscovery {
   private final long updateRate;
 
   private HeartManDiscovery() {
-    this(10);
+    this(5);
   }
 
   private HeartManDiscovery(long updateRate) {

@@ -88,7 +88,10 @@ public class ListeningTask extends Thread {
         double ecgValue;
         int read = in.read(buffer);
         int readDataPoints = read / 2;
-        long timestamp = System.currentTimeMillis();
+
+        // calculate timestamp of first data point, which is readDataPoints in
+        // the past
+        long timestamp = System.currentTimeMillis() - readDataPoints * updateRate;
 
         for (int i = 0; i < readDataPoints; i++) {
           ecgValue = HeartManInputStream.calculateECGValue(new byte[] { buffer[2 * i], buffer[2 * i + 1] }, true);

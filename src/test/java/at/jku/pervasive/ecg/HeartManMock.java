@@ -76,6 +76,11 @@ public class HeartManMock implements Runnable {
     }
   }
 
+  protected boolean isRunning() {
+    return this.isRunning;
+
+  }
+
   public void sendValue(double value) {
     System.out.println("send value");
     this.nextValue.add(value);

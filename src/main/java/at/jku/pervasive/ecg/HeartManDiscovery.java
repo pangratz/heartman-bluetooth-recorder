@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
+import javax.bluetooth.BluetoothConnectionException;
 import javax.bluetooth.BluetoothStateException;
 import javax.bluetooth.DataElement;
 import javax.bluetooth.DeviceClass;
@@ -151,10 +152,17 @@ public class HeartManDiscovery {
 
     System.out.println("ping device");
 
-    Connection connection = Connector.open(url, Connector.READ);
-    RemoteDevice remoteDevice = RemoteDevice.getRemoteDevice(connection);
-    RemoteDeviceHelper.authenticate(remoteDevice, "Heartman");
-    return remoteDevice;
+    try {
+      Connection connection = Connector.open(url, Connector.READ);
+      RemoteDevice remoteDevice = RemoteDevice.getRemoteDevice(connection);
+      RemoteDeviceHelper.authenticate(remoteDevice, "Heartman");
+      return remoteDevice;
+    } catch (BluetoothConnectionException bce) {
+      if (bce.getMessage().startsWith("No such device")) {
+        return null;
+      }
+      throw bce;
+    }
   }
 
   public List<ServiceRecord> searchServices(RemoteDevice remoteDevice)

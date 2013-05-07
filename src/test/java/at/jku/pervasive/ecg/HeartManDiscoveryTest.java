@@ -1,15 +1,18 @@
 package at.jku.pervasive.ecg;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import javax.bluetooth.RemoteDevice;
 import javax.bluetooth.ServiceRecord;
 
-import org.junit.Assert;
 import junit.framework.TestCase;
+
+import org.junit.Assert;
 
 public class HeartManDiscoveryTest extends TestCase {
 
@@ -30,6 +33,17 @@ public class HeartManDiscoveryTest extends TestCase {
   private HeartManDiscovery heartManDiscovery;
 
   private HeartManSimulator heartManSimulator;
+
+  public void testPingDevice() throws IOException, URISyntaxException {
+    String device = heartManSimulator.createFileDevice(getFile("/recording20s_sleep5ms_1.dat"));
+    RemoteDevice remoteDevice = heartManDiscovery.pingDevice(device);
+    assertNotNull(remoteDevice);
+  }
+
+  public void testPingNotExistingDevice() throws IOException {
+    RemoteDevice remoteDevice = heartManDiscovery.pingDevice("0B1000000001");
+    assertNull(remoteDevice);
+  }
 
   public void testDiscoverHeartManDevices() throws Exception {
     heartManSimulator.createDevice();

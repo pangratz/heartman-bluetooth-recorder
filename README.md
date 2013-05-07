@@ -19,3 +19,10 @@ export DYLD_LIBRARY_PATH=/path/to/folder/which/contains/IOBluetooth
 cd "/Applications/eclipse/Eclipse.app/Contents/MacOS"
 ./eclipse
 ```
+
+## Run tests
+
+On Mac OS X you need to run the tests like this
+
+	export DYLD_LIBRARY_PATH=/path/to/folder/which/contains/IOBluetooth
+	mvn test -Dd32

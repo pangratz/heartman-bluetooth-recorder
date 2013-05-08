@@ -5,21 +5,21 @@ import java.util.List;
 
 public class Recorder implements IHeartManListener {
 
-	private final List<Double> recordings;
+  private final List<Double> recordings;
 
-	public Recorder() {
-		super();
+  public Recorder() {
+    super();
 
-		this.recordings = new LinkedList<Double>();
-	}
+    this.recordings = new LinkedList<Double>();
+  }
 
-	@Override
-	public void dataReceived(String address, long timestamp, double value) {
-		this.recordings.add(value);
-	}
+  @Override
+  public void dataReceived(String address, long timestamp, double value) {
+    this.recordings.add(value);
+  }
 
-	public List<Double> getRecordings() {
-		return recordings;
-	}
+  public List<Double> getRecordings() {
+    return recordings;
+  }
 
 }

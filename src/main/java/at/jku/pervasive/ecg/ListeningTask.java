@@ -2,6 +2,8 @@ package at.jku.pervasive.ecg;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,9 +86,12 @@ public class ListeningTask extends Thread {
 
       // 2 bytes per data point
       byte[] buffer = new byte[DATA_POINTS_PER_READ * 2];
+      ShortBuffer shortBuffer = null;
       while (!isInterrupted()) {
         double ecgValue;
         int read = in.read(buffer);
+        shortBuffer = ByteBuffer.wrap(buffer, 0, read).asShortBuffer();
+
         int readDataPoints = read / 2;
 
         // calculate timestamp of first data point, which is
@@ -95,13 +100,15 @@ public class ListeningTask extends Thread {
         long timestamp = System.currentTimeMillis() - readDataPoints * updateRate;
 
         for (int i = 0; i < readDataPoints; i++) {
-          ecgValue = HeartManInputStream.calculateECGValue(new byte[] { buffer[2 * i], buffer[2 * i + 1] }, true);
+          // get next short from buffer and calculate mV value
+          ecgValue = shortBuffer.get() * HeartManInputStream.MAGIC_NUMBER;
           for (IHeartManListener l : listeners) {
             l.dataReceived(address, timestamp + i * updateRate, ecgValue);
           }
-          for (IByteListener bL : byteListeners) {
-            bL.bytesReceived(buffer);
-          }
+        }
+
+        for (IByteListener bL : byteListeners) {
+          bL.bytesReceived(buffer);
         }
 
         try {

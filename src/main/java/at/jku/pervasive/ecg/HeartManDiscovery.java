@@ -27,7 +27,6 @@ import com.intel.bluetooth.RemoteDeviceHelper;
 public class HeartManDiscovery {
 
   public static final UUID HEARTMAN_SERVICE_UUID = BluetoothConsts.RFCOMM_PROTOCOL_UUID;
-
   public static Object STACK_ID;
 
   private static final HeartManDiscovery INSTANCE = new HeartManDiscovery();
@@ -37,7 +36,6 @@ public class HeartManDiscovery {
   }
 
   private final Semaphore deviceInquiry = new Semaphore(1);
-
   private final Map<String, List<ServiceRecord>> servicesDiscovered = new HashMap<String, List<ServiceRecord>>();
   private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
@@ -82,7 +80,15 @@ public class HeartManDiscovery {
         } catch (Exception e) {
           e.printStackTrace();
         }
-        devicesDiscovered.put(btDevice.getBluetoothAddress(), btDevice);
+        try {
+          String name = btDevice.getFriendlyName(true);
+
+          // Only add devices which have "heartman" in their name
+          if (name != null && name.toLowerCase().contains("heartman")) {
+            devicesDiscovered.put(btDevice.getBluetoothAddress(), btDevice);
+          }
+        } catch (IOException cantGetDeviceName) {
+        }
         try {
           System.out.println("     name " + btDevice.getFriendlyName(true));
           System.out.println("     adress: " + btDevice.getBluetoothAddress());

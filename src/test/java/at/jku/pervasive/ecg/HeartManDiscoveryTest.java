@@ -114,37 +114,6 @@ public class HeartManDiscoveryTest extends TestCase {
     s2.acquire();
   }
 
-  public void testRecording() throws Exception {
-    String address = heartManSimulator.createDevice();
-    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
-    assertNotNull(devices);
-    assertEquals(1, devices.size());
-
-    heartManDiscovery.startRecording(address);
-
-    final Semaphore s = new Semaphore(0);
-    TestHeartManListener listener = new TestHeartManListener() {
-      @Override
-      public void dataReceived(String address, long timestamp, double value) {
-        s.release();
-      }
-    };
-    heartManDiscovery.startListening(address, listener);
-    heartManSimulator.sendValue(address, 1.0);
-    heartManSimulator.sendValue(address, 2.0);
-    heartManSimulator.sendValue(address, 3.0);
-    heartManSimulator.sendValue(address, 4.0);
-    s.acquire(4);
-
-    List<Double> recordings = heartManDiscovery.stopRecording(address);
-    assertNotNull(recordings);
-    assertEquals(4, recordings.size());
-    assertEquals(1.0, recordings.get(0), 0.1D);
-    assertEquals(2.0, recordings.get(1), 0.1D);
-    assertEquals(3.0, recordings.get(2), 0.1D);
-    assertEquals(4.0, recordings.get(3), 0.1D);
-  }
-
   public void testStartListening() throws Exception {
     String address = heartManSimulator.createDevice();
 

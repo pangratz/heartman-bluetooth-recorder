@@ -24,7 +24,7 @@ public class ListeningTask extends Thread {
   public final static int DATA_POINTS_PER_READ = 50;
 
   private final String address;
-  private final List<IByteListener> byteListeners;
+
   private final List<IHeartManListener> listeners;
   private final ServiceRecord serviceRecord;
   private final Object stackId;
@@ -38,14 +38,6 @@ public class ListeningTask extends Thread {
     this.address = serviceRecord.getHostDevice().getBluetoothAddress();
 
     listeners = new ArrayList<IHeartManListener>(1);
-    byteListeners = new ArrayList<IByteListener>(1);
-  }
-
-  public void addListener(IByteListener byteListener) {
-    if (byteListener != null) {
-      this.byteListeners.add(byteListener);
-    }
-
   }
 
   public void addListener(IHeartManListener listener) {
@@ -56,7 +48,6 @@ public class ListeningTask extends Thread {
 
   public void clearListener() {
     this.listeners.clear();
-    this.byteListeners.clear();
   }
 
   public void removeListener(IHeartManListener listener) {
@@ -107,10 +98,6 @@ public class ListeningTask extends Thread {
           }
         }
 
-        for (IByteListener bL : byteListeners) {
-          bL.bytesReceived(buffer);
-        }
-
         try {
           Thread.sleep(updateRate * DATA_POINTS_PER_READ);
         } catch (Exception e) {
@@ -136,16 +123,4 @@ public class ListeningTask extends Thread {
     }
   }
 
-  protected void dataReceived(long timestamp, byte[] data) {
-    short valueFromEcg = (short) ((data[0] << 8) | (data[1] & 0xff));
-    double value = HeartManInputStream.MAGIC_NUMBER * valueFromEcg;
-
-    for (IByteListener byteListener : byteListeners) {
-      byteListener.bytesReceived(data);
-    }
-
-    for (IHeartManListener listener : listeners) {
-      listener.dataReceived(address, timestamp, value);
-    }
-  }
 }

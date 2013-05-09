@@ -40,7 +40,6 @@ public class HeartManDiscovery {
   private final Map<String, List<ServiceRecord>> servicesDiscovered = new HashMap<String, List<ServiceRecord>>();
   private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
-  private final Map<String, Recorder> recorders = new HashMap<String, Recorder>();
 
   // check for new ecg values every UPDATE_RATE ms
   private final long updateRate;
@@ -234,11 +233,6 @@ public class HeartManDiscovery {
     return null;
   }
 
-  public void startListening(String address, IByteListener bl, ServiceRecord serviceRecord) {
-    ListeningTask listeningTask = getListeningTask(address, serviceRecord);
-    listeningTask.addListener(bl);
-  }
-
   public void startListening(String address, IHeartManListener listener) throws BluetoothStateException {
     ListeningTask listeningTask = listeningTasks.get(address);
     boolean start = false;
@@ -273,19 +267,6 @@ public class HeartManDiscovery {
     }
   }
 
-  public void startRecording(String address) throws BluetoothStateException {
-    Recorder oldRecorder = recorders.remove(address);
-    if (oldRecorder != null) {
-      for (ListeningTask task : listeningTasks.values()) {
-        task.removeListener(oldRecorder);
-      }
-    }
-
-    Recorder recorder = new Recorder();
-    recorders.put(address, recorder);
-    startListening(address, recorder);
-  }
-
   public void stopListening(String address) {
     ListeningTask listeningTask = listeningTasks.get(address);
     if (listeningTask != null) {
@@ -294,12 +275,6 @@ public class HeartManDiscovery {
       listeningTask = null;
       listeningTasks.put(address, null);
     }
-  }
-
-  public List<Double> stopRecording(String address) {
-    Recorder recorder = recorders.get(address);
-    listeningTasks.get(address).removeListener(recorder);
-    return recorder.getRecordings();
   }
 
   public void tearDown() {

@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+@Deprecated
 public class HeartManInputStream extends BufferedInputStream {
 
   public static double MAGIC_NUMBER = 0.00020926D;

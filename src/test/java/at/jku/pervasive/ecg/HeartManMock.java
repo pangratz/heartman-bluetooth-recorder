@@ -2,6 +2,7 @@ package at.jku.pervasive.ecg;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.Semaphore;
@@ -41,15 +42,21 @@ public class HeartManMock implements Runnable {
 
       dos = connection.openDataOutputStream();
 
+      ByteBuffer buffer = ByteBuffer.allocate(2);
       while (isRunning) {
+        buffer.clear();
         System.out.println("waiting for lock to release");
         try {
           lock.acquire();
           if (isRunning) {
             System.out.println("lock released and got value " + nextValue);
             double value = nextValue.poll().doubleValue();
-            value = value / HeartManInputStream.MAGIC_NUMBER;
-            byte[] data = HeartManInputStream.caluclateByteValue(value);
+            value = value / ListeningTask.MAGIC_NUMBER_FOR_MV_CONVESION;
+
+            buffer.putShort((short) value);
+            buffer.flip();
+            byte[] data = buffer.array();
+
             dos.write(data);
           }
         } catch (InterruptedException e) {

@@ -20,6 +20,10 @@ import com.intel.bluetooth.RemoteDeviceHelper;
 
 public class ListeningTask extends Thread {
 
+  // this magic number is used to convert from a read short value to the
+  // corresponding value in mV
+  public static double MAGIC_NUMBER_FOR_MV_CONVESION = 0.00020926D;
+
   // how many data points shall be fetched per read of ECG input stream?
   public final static int DATA_POINTS_PER_READ = 50;
 
@@ -92,7 +96,7 @@ public class ListeningTask extends Thread {
 
         for (int i = 0; i < readDataPoints; i++) {
           // get next short from buffer and calculate mV value
-          ecgValue = shortBuffer.get() * HeartManInputStream.MAGIC_NUMBER;
+          ecgValue = shortBuffer.get() * MAGIC_NUMBER_FOR_MV_CONVESION;
           for (IHeartManListener l : listeners) {
             l.dataReceived(address, timestamp + i * updateRate, ecgValue);
           }

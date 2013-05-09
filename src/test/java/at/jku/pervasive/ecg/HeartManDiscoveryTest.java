@@ -56,6 +56,17 @@ public class HeartManDiscoveryTest extends TestCase {
     assertNotNull(device);
   }
 
+  public void testGetDiscoveredHeartManDevices() throws IOException, InterruptedException {
+    heartManSimulator.createDevice();
+    heartManSimulator.createDevice();
+
+    heartManDiscovery.discoverHeartManDevices();
+
+    List<HeartManDevice> devices = heartManDiscovery.getDiscoveredHeartManDevices();
+    assertNotNull(devices);
+    assertEquals(2, devices.size());
+  }
+
   public void testGetService() throws Exception {
     String address = heartManSimulator.createDevice();
 

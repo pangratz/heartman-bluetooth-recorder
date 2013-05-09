@@ -74,15 +74,4 @@ public class HeartManSimulator {
     EmulatorTestsHelper.stopInProcessServer();
   }
 
-  public String createRandomDevice() throws BluetoothStateException {
-    String address = String.format(baseAddress, count.incrementAndGet());
-
-    HeartManMock mock = new RandomHeartManMock();
-    mocks.put(address, mock);
-    Thread t = EmulatorTestsHelper.runNewEmulatorStack(mock);
-    serverThreads.add(t);
-
-    return address;
-  }
-
 }

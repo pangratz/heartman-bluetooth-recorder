@@ -151,12 +151,26 @@ public class HeartManDiscovery {
     }
   }
 
-  public boolean isDeviceInquiryStarted() {
-    return isDeviceInquiryStarted;
+  public List<HeartManDevice> getDiscoveredHeartManDevices() {
+    return discoveredHeartManDevices;
+  }
+
+  protected ListeningTask getListeningTask(String address, ServiceRecord serviceRecord) {
+    ListeningTask listeningTask = listeningTasks.get(address);
+    if (listeningTask == null) {
+      listeningTask = new ListeningTask(STACK_ID, updateRate, serviceRecord);
+      listeningTasks.put(address, listeningTask);
+      listeningTask.start();
+    }
+    return listeningTask;
   }
 
   public boolean isBluetoothEnabled() {
     return LocalDevice.isPowerOn();
+  }
+
+  public boolean isDeviceInquiryStarted() {
+    return isDeviceInquiryStarted;
   }
 
   public RemoteDevice pingDevice(String address) throws IOException {
@@ -291,19 +305,5 @@ public class HeartManDiscovery {
     for (String address : listeningTasks.keySet()) {
       stopListening(address);
     }
-  }
-
-  protected ListeningTask getListeningTask(String address, ServiceRecord serviceRecord) {
-    ListeningTask listeningTask = listeningTasks.get(address);
-    if (listeningTask == null) {
-      listeningTask = new ListeningTask(STACK_ID, updateRate, serviceRecord);
-      listeningTasks.put(address, listeningTask);
-      listeningTask.start();
-    }
-    return listeningTask;
-  }
-
-  public List<HeartManDevice> getDiscoveredHeartManDevices() {
-    return discoveredHeartManDevices;
   }
 }

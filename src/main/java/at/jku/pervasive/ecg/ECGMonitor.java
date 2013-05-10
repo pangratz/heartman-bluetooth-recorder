@@ -165,10 +165,6 @@ public class ECGMonitor extends JFrame {
     setLocationRelativeTo(null);
   }
 
-  public IHeartManListener getHeartManListener() {
-    return listenForUpdates;
-  }
-
   private JPanel createSettingsPanel() {
     JPanel panel = new JPanel(new FlowLayout());
 
@@ -207,5 +203,9 @@ public class ECGMonitor extends JFrame {
 
     xyPlot.getRangeAxis().setRange(new Range(-1.0, 3.0));
     return xyPlot;
+  }
+
+  public IHeartManListener getHeartManListener() {
+    return listenForUpdates;
   }
 }

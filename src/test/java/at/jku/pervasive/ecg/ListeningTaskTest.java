@@ -14,6 +14,28 @@ public class ListeningTaskTest extends TestCase {
   private ServiceRecord serviceRecord;
   private Object stackId;
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    heartManSimulator = new HeartManSimulator();
+    HeartManDiscovery heartManDiscovery = HeartManDiscovery.getInstance();
+
+    String address = heartManSimulator.createDevice();
+    heartManDiscovery.discoverHeartManDevices();
+    List<ServiceRecord> services = heartManDiscovery.searchServices(address);
+    serviceRecord = services.get(0);
+
+    stackId = BlueCoveImpl.getThreadBluetoothStackID();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+
+    heartManSimulator.stopServer();
+  }
+
   public void testAddListener() throws Exception {
     ListeningTask listeningTask = new ListeningTask(stackId, 10, serviceRecord);
 
@@ -74,28 +96,6 @@ public class ListeningTaskTest extends TestCase {
     } catch (Exception e) {
       fail("removing a null listener should not throw an exception");
     }
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    heartManSimulator = new HeartManSimulator();
-    HeartManDiscovery heartManDiscovery = HeartManDiscovery.getInstance();
-
-    String address = heartManSimulator.createDevice();
-    heartManDiscovery.discoverHeartManDevices();
-    List<ServiceRecord> services = heartManDiscovery.searchServices(address);
-    serviceRecord = services.get(0);
-
-    stackId = BlueCoveImpl.getThreadBluetoothStackID();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-
-    heartManSimulator.stopServer();
   }
 
 }

@@ -20,6 +20,11 @@ public class HeartManMock implements Runnable {
   private final Semaphore lock = new Semaphore(0);
   private final Queue<Double> nextValue = new LinkedList<Double>();
 
+  protected boolean isRunning() {
+    return this.isRunning;
+
+  }
+
   @Override
   public void run() {
     this.isRunning = true;
@@ -80,11 +85,6 @@ public class HeartManMock implements Runnable {
         }
       }
     }
-  }
-
-  protected boolean isRunning() {
-    return this.isRunning;
-
   }
 
   public void sendValue(double value) {

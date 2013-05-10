@@ -17,13 +17,6 @@ import org.apache.commons.io.IOUtils;
 
 public class FileHeartManMock extends HeartManMock {
 
-  private final File dataFile;
-
-  public FileHeartManMock(File dataFile) {
-    super();
-    this.dataFile = dataFile;
-  }
-
   private class ClientConnectionThread extends Thread {
 
     private StreamConnection conn;
@@ -65,6 +58,13 @@ public class FileHeartManMock extends HeartManMock {
         }
       }
     }
+  }
+
+  private final File dataFile;
+
+  public FileHeartManMock(File dataFile) {
+    super();
+    this.dataFile = dataFile;
   }
 
   @Override

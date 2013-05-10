@@ -34,15 +34,30 @@ public class HeartManDiscoveryTest extends TestCase {
 
   private HeartManSimulator heartManSimulator;
 
-  public void testPingDevice() throws IOException, URISyntaxException {
-    String device = heartManSimulator.createFileDevice(getFile("/recording20s_sleep5ms_1.dat"));
-    RemoteDevice remoteDevice = heartManDiscovery.pingDevice(device);
-    assertNotNull(remoteDevice);
+  protected File getFile(String path) throws URISyntaxException {
+    URL url = ECGMonitorMain.class.getResource(path);
+    return new File(url.toURI());
   }
 
-  public void testPingNotExistingDevice() throws IOException {
-    RemoteDevice remoteDevice = heartManDiscovery.pingDevice("0B1000000001");
-    assertNull(remoteDevice);
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    heartManSimulator = new HeartManSimulator();
+
+    heartManDiscovery = HeartManDiscovery.getInstance();
+    assertTrue(heartManDiscovery.isBluetoothEnabled());
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+
+    heartManDiscovery.tearDown();
+    heartManDiscovery = null;
+
+    heartManSimulator.stopServer();
+    heartManSimulator = null;
   }
 
   public void testDiscoverHeartManDevices() throws Exception {
@@ -114,6 +129,17 @@ public class HeartManDiscoveryTest extends TestCase {
     s2.acquire();
   }
 
+  public void testPingDevice() throws IOException, URISyntaxException {
+    String device = heartManSimulator.createFileDevice(getFile("/recording20s_sleep5ms_1.dat"));
+    RemoteDevice remoteDevice = heartManDiscovery.pingDevice(device);
+    assertNotNull(remoteDevice);
+  }
+
+  public void testPingNotExistingDevice() throws IOException {
+    RemoteDevice remoteDevice = heartManDiscovery.pingDevice("0B1000000001");
+    assertNull(remoteDevice);
+  }
+
   public void testStartListening() throws Exception {
     String address = heartManSimulator.createDevice();
 
@@ -133,6 +159,45 @@ public class HeartManDiscoveryTest extends TestCase {
 
     assertEquals(6.0D, listener.receivedValue, 0.01D);
     System.out.println("finished");
+  }
+
+  public void testStartListeningForDeviceWhenAlreadyListeningOnOther() throws Exception {
+    String first = heartManSimulator.createDevice();
+    String second = heartManSimulator.createDevice();
+
+    final Semaphore s = new Semaphore(0);
+    TestHeartManListener listener = new TestHeartManListener() {
+      @Override
+      public void dataReceived(String address, long timestamp, double value) {
+        super.dataReceived(address, timestamp, value);
+        s.release(1);
+      }
+    };
+
+    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
+    assertNotNull(devices);
+    assertEquals(2, devices.size());
+
+    heartManDiscovery.startListening(first, listener);
+
+    heartManSimulator.sendValue(first, 1.0D);
+    s.acquire();
+
+    assertTrue(listener.invoked);
+    assertEquals(first, listener.address);
+    assertEquals(1.0D, listener.receivedValue, 0.1D);
+    assertEquals(0, s.availablePermits());
+
+    heartManDiscovery.startListening(second, listener);
+
+    listener.reset();
+    heartManSimulator.sendValue(second, 2.0D);
+    s.acquire();
+
+    assertTrue(listener.invoked);
+    assertEquals(second, listener.address);
+    assertEquals(2.0D, listener.receivedValue, 0.1D);
+    assertEquals(0, s.availablePermits());
   }
 
   public void testStartListeningForInvalidAdress() throws Exception {
@@ -170,45 +235,6 @@ public class HeartManDiscoveryTest extends TestCase {
     assertEquals(first, listener.address);
     assertEquals(1.0D, listener.receivedValue, 0.1D);
     assertEquals(0, s.availablePermits());
-
-    listener.reset();
-    heartManSimulator.sendValue(second, 2.0D);
-    s.acquire();
-
-    assertTrue(listener.invoked);
-    assertEquals(second, listener.address);
-    assertEquals(2.0D, listener.receivedValue, 0.1D);
-    assertEquals(0, s.availablePermits());
-  }
-
-  public void testStartListeningForDeviceWhenAlreadyListeningOnOther() throws Exception {
-    String first = heartManSimulator.createDevice();
-    String second = heartManSimulator.createDevice();
-
-    final Semaphore s = new Semaphore(0);
-    TestHeartManListener listener = new TestHeartManListener() {
-      @Override
-      public void dataReceived(String address, long timestamp, double value) {
-        super.dataReceived(address, timestamp, value);
-        s.release(1);
-      }
-    };
-
-    List<HeartManDevice> devices = heartManDiscovery.discoverHeartManDevices();
-    assertNotNull(devices);
-    assertEquals(2, devices.size());
-
-    heartManDiscovery.startListening(first, listener);
-
-    heartManSimulator.sendValue(first, 1.0D);
-    s.acquire();
-
-    assertTrue(listener.invoked);
-    assertEquals(first, listener.address);
-    assertEquals(1.0D, listener.receivedValue, 0.1D);
-    assertEquals(0, s.availablePermits());
-
-    heartManDiscovery.startListening(second, listener);
 
     listener.reset();
     heartManSimulator.sendValue(second, 2.0D);
@@ -375,32 +401,6 @@ public class HeartManDiscoveryTest extends TestCase {
 
     assertFalse(t1.isError());
     assertFalse(t2.isError());
-  }
-
-  protected File getFile(String path) throws URISyntaxException {
-    URL url = ECGMonitorMain.class.getResource(path);
-    return new File(url.toURI());
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
-    heartManSimulator = new HeartManSimulator();
-
-    heartManDiscovery = HeartManDiscovery.getInstance();
-    assertTrue(heartManDiscovery.isBluetoothEnabled());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
-
-    heartManDiscovery.tearDown();
-    heartManDiscovery = null;
-
-    heartManSimulator.stopServer();
-    heartManSimulator = null;
   }
 
 }

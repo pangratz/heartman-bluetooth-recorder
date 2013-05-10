@@ -41,6 +41,9 @@ public class HeartManDiscovery {
   private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
 
+  // flag, indicating whether a device inquiry has started
+  private boolean isDeviceInquiryStarted;
+
   // check for new ecg values every UPDATE_RATE ms
   private final long updateRate;
 
@@ -118,6 +121,7 @@ public class HeartManDiscovery {
       deviceInquiry.acquire();
       boolean started = LocalDevice.getLocalDevice().getDiscoveryAgent().startInquiry(DiscoveryAgent.GIAC, listener);
       if (started) {
+        this.isDeviceInquiryStarted = true;
         System.out.println("wait for device inquiry to complete...");
         inquiryCompletedEvent.wait();
         System.out.println(devicesDiscovered.size() + " device(s) found");
@@ -138,11 +142,17 @@ public class HeartManDiscovery {
           searchServices(device.getAddress());
         }
 
+        this.isDeviceInquiryStarted = false;
         return discoveredHeartManDevices;
       }
 
+      this.isDeviceInquiryStarted = false;
       return null;
     }
+  }
+
+  public boolean isDeviceInquiryStarted() {
+    return isDeviceInquiryStarted;
   }
 
   public boolean isBluetoothEnabled() {

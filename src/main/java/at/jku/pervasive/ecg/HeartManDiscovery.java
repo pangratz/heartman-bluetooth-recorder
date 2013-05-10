@@ -36,7 +36,7 @@ public class HeartManDiscovery {
   }
 
   private final Semaphore deviceInquiry = new Semaphore(1);
-  private List<HeartManDevice> discoveredHeartManDevices;
+  private final List<HeartManDevice> discoveredHeartManDevices = new LinkedList<HeartManDevice>();
   private final Map<String, List<ServiceRecord>> servicesDiscovered = new HashMap<String, List<ServiceRecord>>();
   private final Map<String, RemoteDevice> devicesDiscovered = new HashMap<String, RemoteDevice>();
   private final Map<String, ListeningTask> listeningTasks = new HashMap<String, ListeningTask>();
@@ -126,7 +126,7 @@ public class HeartManDiscovery {
         inquiryCompletedEvent.wait();
         System.out.println(devicesDiscovered.size() + " device(s) found");
 
-        discoveredHeartManDevices = new LinkedList<HeartManDevice>();
+        discoveredHeartManDevices.clear();
         for (RemoteDevice device : devicesDiscovered.values()) {
           String name = "UNKNOWN";
           try {
